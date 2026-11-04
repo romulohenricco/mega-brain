@@ -63,7 +63,7 @@ User: "publish page X online"
    *build + *validate-tokens + *a11y-audit + *contrast-check + *visual-regression
     │
     ▼
-4. @devops (mega-brain-core/development/agents/devops)
+4. @devops (authority: .claude/rules/agent-authority.md)
    ├─ DNS read (Cloudflare API: list DNS + list Worker routes for zone)
    ├─ wrangler.toml build (project + route + compatibility_date)
    ├─ wrangler deploy (Pages or Workers)
@@ -111,7 +111,7 @@ If any gap: REPORT to user BEFORE generating page artifacts. Do not waste tokens
 
 This rule extends:
 - `services/cloudflare/` (created on first deploy)
-- `mega-brain-core/development/agents/devops.md` (authority — extends `*push` to web deploys)
+- `.claude/rules/agent-authority.md` (local authority — assigns publishing to `@devops`)
 - `agents/_registry/capability-registry.yaml` (entry: `cloudflare_dns_edit`, `cloudflare_workers_routes_read`)
 
 ## Trigger Keywords

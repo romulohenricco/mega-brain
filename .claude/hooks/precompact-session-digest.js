@@ -2,45 +2,52 @@
 /**
  * Claude Code Hook: PreCompact Session Digest
  *
- * This hook is registered with Claude Code to trigger before context compact.
- * It delegates to the unified hook runner in mega-brain-core.
+ * Registered in .claude/settings.json. Passes the hook's JSON stdin to the
+ * local Python digest writer; importing the hook keeps the handler API.
  *
- * Installation:
- * - Claude Code automatically discovers hooks in .claude/hooks/
- * - Hook naming: {event}-{name}.js (e.g., precompact-session-digest.js)
- *
- * @see mega-brain-core/hooks/unified/runners/precompact-runner.js
+ * @see .claude/hooks/precompact_digest.py
  * @see Story MIS-3 - Session Digest (PreCompact Hook)
  */
 
 'use strict';
 
-const path = require('path');
+const { spawnSync } = require('node:child_process');
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
 
-// Resolve path to the unified hook runner
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
-const runnerPath = path.join(
-  PROJECT_ROOT,
-  'mega-brain-core',
-  'hooks',
-  'unified',
-  'runners',
-  'precompact-runner.js',
-);
+const digestWriter = path.join(__dirname, 'precompact_digest.py');
 
-// Load and execute the hook runner
-try {
-  const { onPreCompact } = require(runnerPath);
+async function onPreCompact(context = {}) {
+  // Prefer real Python on Windows, before the python3 Microsoft Store alias.
+  const candidates = process.platform === 'win32'
+    ? [['python', []], ['py', ['-3']], ['python3', []]]
+    : [['python3', []], ['python', []]];
+  const input = JSON.stringify(context);
 
-  // Export the hook handler for Claude Code
-  module.exports = async (context) => {
-    return await onPreCompact(context);
-  };
-} catch (error) {
-  console.error('[PreCompact Hook] Failed to load hook runner:', error.message);
+  for (const [command, args] of candidates) {
+    const result = spawnSync(command, [...args, digestWriter], {
+      input,
+      encoding: 'utf8',
+      env: { ...process.env, PYTHONUTF8: '1' },
+      windowsHide: true,
+      // All attempts together stay below the registered 10-second hook limit.
+      timeout: 2500,
+    });
+    if (!result.error && result.status === 0) return;
+  }
+  // Hook failures must not prevent Claude Code from compacting the session.
+  console.error('[PreCompact Hook] Local Python digest writer unavailable, skipping');
+}
 
-  // Graceful degradation - export no-op function
-  module.exports = async () => {
-    console.log('[PreCompact Hook] Hook runner not available, skipping');
-  };
+module.exports = onPreCompact;
+
+if (require.main === module) {
+  try {
+    const input = readFileSync(0, 'utf8').trim();
+    onPreCompact(input ? JSON.parse(input) : {}).catch(() => {
+      console.error('[PreCompact Hook] Could not save session digest, skipping');
+    });
+  } catch {
+    console.error('[PreCompact Hook] Invalid hook input, skipping');
+  }
 }

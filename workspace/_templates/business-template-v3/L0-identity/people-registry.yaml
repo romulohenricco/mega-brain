@@ -1,10 +1,11 @@
 # =============================================================================
 # PEOPLE-REGISTRY.YAML — Per-Spoke Subset Template v3.0
 # =============================================================================
-# Purpose: People who belong to THIS business (FK to hub people-registry)
+# Purpose: People who belong to THIS business (local person_ids)
 # Guardian: COO / HR
 # Location: workspace/businesses/{slug}/L0-identity/people-registry.yaml
-# Hub reference: mega-brain-core/data/people-registry.yaml
+# Single-business spoke: no shared hub registry is shipped with this repository.
+# See .claude/rules/hub-governance.md for the local governance contract.
 #
 # Source: ADR-GAP009 Section 6
 # Owner: c-level-squad
@@ -24,13 +25,14 @@ metadata:
   business: "FILL_THIS"
   status: "TEMPLATE"
   last_updated: "FILL_THIS"
-  hub_registry: "mega-brain-core/data/people-registry.yaml"
+  # Optional repo-relative path, only when a shared registry actually exists.
+  hub_registry: null
 
-# Per-spoke subset — references person_ids from hub registry
-# Each entry key MUST match a person_id in the hub people-registry
+# Local registry — entry keys match the local person_id.
+# If hub_registry is configured, person_ids must also exist in that registry.
 people:
   example-person:
-    person_id: "FILL_THIS"        # Must match hub registry person_id
+    person_id: "FILL_THIS"        # Local identifier; shared ID only when configured
     allocation: 1.0               # 0.0-1.0 allocation to this business
     department: "FILL_THIS"       # e.g. "comercial", "operacoes", "tech"
     direct_leader: "FILL_THIS"    # person_id of leader in this business

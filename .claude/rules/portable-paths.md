@@ -20,7 +20,7 @@ These paths are not part of the product. They are local machine state.
 
 Use repo-relative paths:
 - `squads/squad-creator/config.yaml`
-- `mega-brain-core/product/checklists/pre-push-checklist.md`
+- `docs/CONTRIBUTING.md`
 - `workspace/businesses/mega-brain/L2-tactical/...`
 - `outputs/traceability/...`
 
