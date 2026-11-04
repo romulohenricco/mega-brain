@@ -24,7 +24,7 @@ CRITICAL_DIRS = [
     "agents",
     "knowledge/external",
     ".claude/hooks",
-    "docs/governance/rules",
+    ".claude/rules",
     ".claude/skills",
 ]
 
