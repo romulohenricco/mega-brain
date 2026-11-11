@@ -40,7 +40,7 @@ def _write(tool: str, file_path: str) -> dict:
 def _run(payload, raw: str | None = None):
     stdin = raw if raw is not None else json.dumps(payload)
     return subprocess.run([sys.executable, "-I", str(GUARD_PATH)], input=stdin, capture_output=True,
-                          text=True, encoding="utf-8", timeout=60)
+                          text=True, encoding="utf-8", timeout=60, check=False)
 
 
 # ----------------------------------------------------------------------- Bash
@@ -65,8 +65,8 @@ def test_blocks_bash_running_decide(command):
     "python squads/copy-squad/scripts/approval_tools.py content-hash x.json",
     "python squads/copy-squad/scripts/validate_copy_squad.py",
     "cat .data/copy-squad/x/y/06-approval/cvc/g4-r1/approval-decision.json",
-    "python squads/copy-squad/scripts/approval_tools.py verify --request 06-approval/a/g4-r1/approval-request.json "
-    "--decision 06-approval/a/g4-r1/approval-decision.json 2>&1",
+    ("python squads/copy-squad/scripts/approval_tools.py verify --request 06-approval/a/g4-r1/approval-request.json "
+     "--decision 06-approval/a/g4-r1/approval-decision.json 2>&1"),
     "ls 06-approval/_campaign/g1-r1/",
     "echo decide",
 ])

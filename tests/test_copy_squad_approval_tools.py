@@ -617,7 +617,7 @@ def test_cli_process_refuses_now_without_test_mode(workspace):
     proc = subprocess.run(
         [sys.executable, "-I", str(TOOLS_PATH), "verify", "--request", str(workspace["req_path"]),
          "--decision", str(workspace["req_path"]), "--now", NOW],
-        capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
+        capture_output=True, text=True, encoding="utf-8", env=env, timeout=60, check=False)
     assert proc.returncode == 2
     assert tools.TEST_MODE_ENV in proc.stderr
 
@@ -625,7 +625,7 @@ def test_cli_process_refuses_now_without_test_mode(workspace):
 def test_cli_process_hash_matches_function(workspace):
     env = {k: v for k, v in os.environ.items() if k != tools.TEST_MODE_ENV}
     proc = subprocess.run([sys.executable, "-I", str(TOOLS_PATH), "hash", str(workspace["req_path"])],
-                          capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
+                          capture_output=True, text=True, encoding="utf-8", env=env, timeout=60, check=False)
     assert proc.returncode == 0
     assert proc.stdout.strip() == workspace["request"]["payload_sha256"]
 

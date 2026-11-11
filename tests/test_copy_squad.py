@@ -214,7 +214,7 @@ def _m_contract(root):
 
 def _tools_line(root: Path, aid: str, value):
     path = root / ".claude" / "agents" / f"copy-squad--{aid}.md"
-    text = re.sub(r"^tools:.*\n", "", path.read_text(encoding="utf-8"), flags=re.M)
+    text = re.sub(r"^tools:.*\n", "", path.read_text(encoding="utf-8"), flags=re.MULTILINE)
     if value is not None:
         text = text.replace("\nagent: ", f"\ntools: {value}\nagent: ", 1)
     path.write_text(text, encoding="utf-8", newline="\n")
