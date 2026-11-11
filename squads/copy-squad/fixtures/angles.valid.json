@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "ang-fluxo-caixa-001",
+    "artifact_type": "angles",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "hook-angle-creator",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.8,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ]
+  },
+  "brief_id": "brf-fluxo-caixa-001",
+  "research_id": "rsp-fluxo-caixa-001",
+  "angles": [
+    {
+      "angle_id": "ang-previsibilidade",
+      "angle": "Previsibilidade antes de crescimento",
+      "hook": "E se você soubesse hoje como será o caixa dos próximos 30 dias?",
+      "promise": "Rotina semanal para enxergar o caixa à frente",
+      "mechanism": "Projeção semanal em 30 minutos",
+      "proof_required": [
+        "Demonstração do modelo"
+      ],
+      "awareness_stage": "problem_aware",
+      "risk_level": "low",
+      "predicted_strength": 78,
+      "reason": "Responde à dor de maior intensidade mapeada no público.",
+      "needs_approval": false
+    },
+    {
+      "angle_id": "ang-planilha-sem-disciplina",
+      "angle": "Planilha só funciona com rotina",
+      "hook": "A planilha não falhou. Faltou uma rotina para usá-la.",
+      "promise": "Rotina guiada que sustenta o uso da planilha",
+      "proof_required": [],
+      "awareness_stage": "solution_aware",
+      "risk_level": "low",
+      "predicted_strength": 71,
+      "reason": "Quebra a objeção de já ter tentado planilhas.",
+      "needs_approval": false
+    },
+    {
+      "angle_id": "ang-garantia",
+      "angle": "Risco reduzido por garantia",
+      "hook": "Teste a mentoria sem risco.",
+      "promise": "Garantia de devolução",
+      "proof_required": [
+        "Política de garantia aprovada"
+      ],
+      "awareness_stage": "product_aware",
+      "risk_level": "high",
+      "predicted_strength": 64,
+      "reason": "Depende de garantia ainda não definida; só usar após aprovação.",
+      "needs_approval": true
+    }
+  ]
+}

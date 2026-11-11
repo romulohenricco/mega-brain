@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "cpl-lp-mentoria-v2",
+    "artifact_type": "compliance-review",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "compliance-checker",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.8,
+    "risk_level": "high",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "copy_id": "cvc-lp-mentoria-v2",
+  "overall_risk": "high",
+  "claims": [
+    {
+      "claim": "Método em 4 etapas para organizar o fluxo de caixa",
+      "claim_type": "other",
+      "status": "unverified",
+      "source": "",
+      "required_action": "Confirmar com o responsável pela oferta que o método existe e tem 4 etapas."
+    },
+    {
+      "claim": "Valor da mentoria [pendente]",
+      "claim_type": "price",
+      "status": "unverified",
+      "required_action": "Preço oficial e condições de pagamento aprovados no G3 antes de publicar."
+    },
+    {
+      "claim": "Espaço de depoimento",
+      "claim_type": "testimonial",
+      "status": "risky",
+      "required_action": "Não publicar sem depoimento real e autorização de uso; manter marcado como pendente."
+    }
+  ],
+  "legal_flags": [
+    {
+      "flag": "Oferta sem preço e condições claros ao consumidor",
+      "reference": "Informação adequada e clara ao consumidor (CDC, art. 6º, III) — confirmar com jurídico",
+      "severity": "medium"
+    }
+  ],
+  "platform_policy_flags": [
+    {
+      "platform": "meta-ads",
+      "policy": "Práticas comerciais e promessas financeiras",
+      "issue": "Se a copy virar anúncio, evitar promessa de resultado financeiro."
+    }
+  ],
+  "lgpd_flags": [
+    "Formulário de agendamento coleta nome e telefone: incluir finalidade e link da política de privacidade."
+  ],
+  "epistemic": {
+    "facts": [
+      "[FONTE:.data/copy-squad/exemplo-negocio/camp-fluxo-caixa-lancamento/04-drafts/cvc-lp-mentoria/v2.json] Seção de prova contém apenas espaço reservado."
+    ],
+    "recommendations": [
+      "Posição: bloquear publicação até G3 aprovar preço e método. Justificativa: claims sem prova e preço ausente. Confiança: ALTA"
+    ],
+    "hypotheses": [
+      "Hipótese: o método em 4 etapas existe em material interno. Validação requerida: confirmar com o responsável da oferta."
+    ]
+  },
+  "approved": false,
+  "blocking_reasons": [
+    "Preço pendente",
+    "Claim de método sem verificação",
+    "Depoimento ausente"
+  ],
+  "requires_legal_review": true
+}

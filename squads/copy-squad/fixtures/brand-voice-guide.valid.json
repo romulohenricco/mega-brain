@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "bvg-pme-financas-001",
+    "artifact_type": "brand-voice-guide",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "brand-voice-guardian",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.8,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ]
+  },
+  "personality": [
+    "Didática",
+    "Acolhedora",
+    "Objetiva"
+  ],
+  "tone_by_context": [
+    {
+      "context": "Página de vendas",
+      "tone": "Confiante e claro, sem exagero"
+    },
+    {
+      "context": "E-mail de nutrição",
+      "tone": "Próximo e conversacional"
+    }
+  ],
+  "vocabulary": {
+    "preferred": [
+      "rotina",
+      "clareza",
+      "passo a passo"
+    ],
+    "forbidden": [
+      "fórmula mágica",
+      "dinheiro fácil",
+      "garantido"
+    ]
+  },
+  "glossary": [
+    {
+      "term": "Fluxo de caixa",
+      "definition": "Registro e previsão das entradas e saídas de dinheiro da empresa."
+    }
+  ],
+  "formality": "informal",
+  "do_examples": [
+    "Você vai saber quanto entra e quanto sai a cada semana."
+  ],
+  "dont_examples": [
+    "Fique rico com nosso método infalível."
+  ],
+  "style_rules": [
+    "Frases de até 25 palavras",
+    "Evitar jargão sem explicação"
+  ]
+}

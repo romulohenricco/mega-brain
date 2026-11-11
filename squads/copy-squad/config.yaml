@@ -1,0 +1,494 @@
+# Copy Squad — Squad de Copy agêntico (time profissional de copywriting)
+# Fonte de verdade do squad. Componentes devem refletir o filesystem.
+# Story: docs/stories/STORY-COPY-SQUAD.md
+
+name: copy-squad
+version: 1.0.2
+short-title: "Copy Squad — time profissional de copy"
+description: >-
+  Squad funcional de copywriting que opera como um time profissional: estratégia,
+  pesquisa, criação, edição, conformidade, dados e operação. Um agente por
+  responsabilidade, contratos JSON de handoff, aprovação humana baseada em risco
+  e aprendizado contínuo. Transforma uma demanda de negócio em copy que produz
+  ação mensurável, sem inventar provas e sem publicar nada sem aprovação.
+squad_type: hybrid                # pipeline de fases + executores Agent/Human/Worker
+domain: copywriting
+author: mega-brain
+license: MIT
+slashPrefix: copySquad
+slash_prefix: copySquad
+entry_agent: copy-chief
+tested: false
+
+megabrain:
+  minVersion: 2.1.0
+  type: squad
+
+pack:
+  name: copy-squad
+  title: "Copy Squad — time profissional de copy"
+  version: 1.0.2
+  author: mega-brain
+  description: "18 agentes funcionais + 1 papel humano para produzir copy com estratégia, prova, governança e aprendizado"
+  icon: "✍️"
+  slash_prefix: copySquad
+
+metadata:
+  created_at: '2026-11-10'
+  updated_at: '2026-11-11'
+  status: active
+  maturity: beta
+  version: '1.0.2'
+  score: 100.0                    # validate-squad-quality.py da engine (só leitura), 2026-11-11; estrutura READY, 0 bloqueios
+  last_validation: '2026-11-11'
+  validation:
+    own_validator: "scripts/validate_copy_squad.py — 0 erros, 0 avisos"
+    tests: "258 testes pytest (tests/test_copy_squad*.py) passando"
+    adversarial_review: "4 rodadas (6 lentes + recheck + final); ADR docs/governance-decisions.md"
+    live_run: false               # nenhuma campanha real executada ainda
+  ontology_spine:
+  - demanda
+  - estrategia
+  - pesquisa
+  - criacao
+  - edicao
+  - conformidade
+  - aprovacao
+  - publicacao
+  - aprendizado
+  independence: >-
+    Squad autocontido. Não depende nem referencia outros squads de copy.
+    Toda dependência resolve dentro de squads/copy-squad/.
+
+activation:
+  command: '@copy-squad--copy-chief'
+  skill: '/copy-squad'
+  legacy_aliases: ['@copy-chief']
+
+tips_keywords:
+- copy
+- copywriting
+- brief
+- landing-page
+- email
+- anuncio
+- roteiro
+- cro
+- compliance
+
+agents:
+  - id: copy-chief
+    file: agents/copy-chief.md
+    tier: orchestrator
+    executor_type: Agent
+    note: "Copy Command Center — único chief; roteia, planeja, monitora, escala"
+  - id: brief-master
+    file: agents/brief-master.md
+    tier: tier_0
+    executor_type: Agent
+  - id: audience-voc
+    file: agents/audience-voc.md
+    tier: tier_0
+    executor_type: Agent
+  - id: offer-strategist
+    file: agents/offer-strategist.md
+    tier: tier_0
+    executor_type: Agent
+  - id: brand-voice-guardian
+    file: agents/brand-voice-guardian.md
+    tier: tier_0
+    executor_type: Agent
+    note: "Define a voz (tier_0) e revisa peças (tier_2)"
+  - id: research-analyst
+    file: agents/research-analyst.md
+    tier: tier_0
+    executor_type: Agent
+  - id: hook-angle-creator
+    file: agents/hook-angle-creator.md
+    tier: tier_1
+    executor_type: Agent
+  - id: conversion-copywriter
+    file: agents/conversion-copywriter.md
+    tier: tier_1
+    executor_type: Agent
+  - id: content-copywriter
+    file: agents/content-copywriter.md
+    tier: tier_1
+    executor_type: Agent
+  - id: ux-writer
+    file: agents/ux-writer.md
+    tier: tier_1
+    executor_type: Agent
+  - id: video-social-scriptwriter
+    file: agents/video-social-scriptwriter.md
+    tier: tier_1
+    executor_type: Agent
+  - id: email-crm-copywriter
+    file: agents/email-crm-copywriter.md
+    tier: tier_1
+    executor_type: Agent
+  - id: localization-specialist
+    file: agents/localization-specialist.md
+    tier: tier_1
+    executor_type: Agent
+  - id: copy-editor
+    file: agents/copy-editor.md
+    tier: tier_2
+    executor_type: Agent
+  - id: compliance-checker
+    file: agents/compliance-checker.md
+    tier: tier_2
+    executor_type: Agent
+  - id: cro-analyst
+    file: agents/cro-analyst.md
+    tier: tier_3
+    executor_type: Agent
+  - id: knowledge-curator
+    file: agents/knowledge-curator.md
+    tier: tier_3
+    executor_type: Agent
+  - id: copy-publisher
+    file: agents/copy-publisher.md
+    tier: tier_3
+    executor_type: Agent
+    note: "Copy Ops & Delivery — versionamento, pacote de aprovação, entrega pós-aprovação"
+  - id: approval-owner
+    file: agents/approval-owner.md
+    tier: human
+    executor_type: Human
+    note: "Papel humano responsável pelos gates G1–G5; sem wrapper em .claude/agents/"
+
+components:
+  agents:
+  - copy-chief
+  - brief-master
+  - audience-voc
+  - offer-strategist
+  - brand-voice-guardian
+  - research-analyst
+  - hook-angle-creator
+  - conversion-copywriter
+  - content-copywriter
+  - ux-writer
+  - video-social-scriptwriter
+  - email-crm-copywriter
+  - localization-specialist
+  - copy-editor
+  - compliance-checker
+  - cro-analyst
+  - knowledge-curator
+  - copy-publisher
+  - approval-owner
+  tasks:
+  - intake-demand
+  - plan-execution
+  - monitor-pipeline
+  - approve-gate
+  - correct-agent-failure
+  - prepare-approval-package
+  - publish-approved-asset
+  - manage-versions
+  - create-brief
+  - consolidate-brief
+  - map-audience
+  - extract-voc
+  - design-offer
+  - map-objections
+  - build-proof-stack
+  - define-brand-voice
+  - review-brand-voice
+  - build-research-packet
+  - find-competitive-angles
+  - generate-angles-hooks
+  - write-landing-page
+  - write-ad-variations
+  - optimize-ctas
+  - build-email-sequence
+  - write-crm-message
+  - write-content-piece
+  - repurpose-asset
+  - write-video-script
+  - write-social-captions
+  - write-ux-microcopy
+  - audit-ux-copy
+  - edit-draft
+  - edit-for-concision
+  - localize-copy
+  - check-compliance
+  - fact-check-claims
+  - analyze-performance
+  - build-cro-hypotheses
+  - design-ab-test
+  - register-learning
+  - retrieve-knowledge
+  - curate-asset-library
+  workflows:
+  - wf-copy-production
+  - wf-campaign-launch
+  - wf-fast-variation
+  - wf-performance-loop
+  - wf-content-repurposing
+  checklists:
+  - intake-checklist
+  - approval-gate-checklist
+  - publish-preflight-checklist
+  - brief-quality-checklist
+  - audience-voc-checklist
+  - offer-quality-checklist
+  - brand-voice-review-checklist
+  - research-quality-checklist
+  - angle-quality-checklist
+  - conversion-copy-checklist
+  - email-crm-checklist
+  - content-quality-checklist
+  - video-script-checklist
+  - ux-copy-checklist
+  - edit-quality-checklist
+  - localization-checklist
+  - compliance-checklist
+  - cro-test-checklist
+  - knowledge-entry-checklist
+  - agent-evaluation-scorecard
+  templates:
+  - execution-plan-tmpl
+  - approval-request-tmpl
+  - campaign-brief-tmpl
+  - offer-canvas-tmpl
+  - brand-voice-guide-tmpl
+  - research-packet-tmpl
+  - copy-deck-tmpl
+  - email-journey-tmpl
+  - video-script-tmpl
+  - performance-report-tmpl
+  - learning-record-tmpl
+  data:
+  - token-registry
+  - composition-rules
+  - quality-gates
+  - risk-policy
+  - agent-metrics
+  - seniority-matrix
+  - handoff-matrix
+  - persistence-layout
+  - channel-specs
+  - compliance-reference-br
+  knowledge:
+  - copywriter-profession
+  - squad-operating-model
+  - human-in-the-loop
+  - metrics-and-evaluation
+  - ethical-persuasion
+  - copy-frameworks
+  contracts:
+  - handoff-envelope
+  - demand-intake
+  - execution-plan
+  - brief
+  - audience-voc
+  - offer-canvas
+  - brand-voice-guide
+  - research-packet
+  - angles
+  - conversion-copy
+  - content-piece
+  - ux-copy
+  - video-script
+  - email-journey
+  - edit-report
+  - brand-review
+  - compliance-review
+  - localization
+  - approval-request
+  - approval-decision
+  - publish-receipt
+  - performance-analysis
+  - learning-record
+  - knowledge-query-result
+  - agent-run
+  - agent-evaluation
+  skills:
+  - copy-squad
+  - copy-briefing-master
+  - copy-voc-extractor
+  - copy-competitive-angle-finder
+  - copy-hook-generator
+  - copy-objection-handler
+  - copy-proof-builder
+  - copy-cta-optimizer
+  - copy-landing-page-architect
+  - copy-email-sequence-builder
+  - copy-ad-variation-generator
+  - copy-script-writer
+  - copy-concision-editor
+  - copy-fact-checker
+  - copy-brand-voice-check
+  - copy-cro-hypothesis-builder
+  - copy-repurposing-engine
+
+quality_gates:
+  agent_min_lines: 300
+  task_min_lines: 100
+  workflow_min_lines: 150
+  checklist_min_lines: 50
+  knowledge_required: true
+  readme_required: true
+  scale: 0-1
+  approve_min: 0.80
+  review_min: 0.60
+  ref: data/quality-gates.yaml
+
+workspace_integration:
+  level: read_only
+  rationale: >-
+    O squad lê contexto de marca/estratégia do workspace quando existir, mas não
+    escreve no workspace. Todo artefato de runtime fica em .data/copy-squad/
+    (gitignorado), separado por negócio e campanha.
+  read_paths:
+  - workspace/businesses/{business}/L0-identity/
+  - workspace/businesses/{business}/L1-strategy/
+  - workspace/businesses/{business}/L2-tactical/
+  write_paths: []
+  allowed_layers: [L0-identity, L1-strategy, L2-tactical]
+  fallback: halt-with-missing-context
+
+persistence:
+  source_of_truth: filesystem
+  runtime_root: .data/copy-squad/{business}/{campaign_id}/
+  library_root: .data/copy-squad/{business}/_library/
+  brand_root: .data/copy-squad/{business}/_brand/
+  telemetry:
+    agent_runs: .data/copy-squad/{business}/_telemetry/agent-runs.jsonl
+    agent_evaluations: .data/copy-squad/{business}/_telemetry/agent-evaluations.jsonl
+  journey_log: .data/logs/journey/lifecycle-events.jsonl
+  rules:
+  - "Drafts versionados (v1, v2, ...) e nunca sobrescritos"
+  - "handoffs.jsonl, telemetria e journey log são append-only"
+  - "Payload aprovado é imutável e verificado por sha256 antes de executar; o hash é sempre calculado por scripts/approval_tools.py hash, nunca por modelo (ADR-001, D1)"
+  - "Governança: docs/governance-decisions.md (ADR-001) prevalece sobre qualquer outro arquivo do squad em caso de conflito"
+  layout_ref: data/persistence-layout.yaml
+  database_proposal: docs/database-proposal.md   # SQL proposto, NÃO aplicado
+
+human_gates:
+  owner: approval-owner
+  gates:
+  - {id: G1, name: "Aprovação do brief", required_for: [medium, high]}
+  - {id: G2, name: "Aprovação de ângulo", required_for: [high]}
+  - {id: G3, name: "Aprovação de claims (de oferta antes da produção e de texto após o compliance)", required_for: [claims_sensiveis, data_privacy, urgencia_escassez]}   # claims_sensiveis = os 8 tipos de HIGH_RISK_CLAIM_TYPES (E5)
+  - {id: G4, name: "Aprovação final antes de publicar/enviar", required_for: [medium, high]}
+  - {id: G5, name: "Correção de falha vira referência", required_for: [sempre_que_humano_corrigir]}
+  sampling: {gate_value: SAMPLING, operation: internal_use, note: "Amostragem de risco low: approval-request com gate SAMPLING produzido pelo copy-publisher; não é gate G1 a G5 e nunca autoriza ação externa"}
+  guards:
+    publish: "approval_decision.decision == approved and gate == G4 and bound_match and approval_decision.payload_sha256 == recalculated_payload_sha256"   # E5: vale em todos os workflows; não existe ramo G4.required == false para ação externa
+    preflight_timing: "QG-PUBLISH-PREFLIGHT é pós-decisão (E4): roda depois do G4 e antes da execução"
+    publish_executors: [human, main_session]   # PUBLISH_EXECUTORS; nenhum subagent executa ação externa (E4)
+  request_producer: copy-publisher     # produtor único de approval-request para G1, G2, G3, G4 e SAMPLING (ADR-001, D5); G5 não usa approval-request
+  risk_policy_ref: data/risk-policy.yaml
+  approval_ttl_hours: 72               # request.expires_at = prazo de resposta; decision.expires_at = decided_at + 72h = janela de execução (D3)
+  # Identificadores de aprovadores humanos autorizados, por {business}. O HUMANO preenche esta lista por {business}
+  # antes do primeiro G4; o squad nunca a preenche. Lista vazia (ou {business} ausente) bloqueia qualquer G4: a
+  # decisão cujo reviewer não conste aqui, ou produzida por agente/modelo, é inválida (preflight bloqueia, D4).
+  approvers:
+    default: []   # ex.: ["id-do-aprovador"]; lista por negócio: {business}: [ids]
+
+artifact_contracts:
+  - {id: handoff-envelope, schema_path: contracts/handoff-envelope.schema.json, template_path: templates/json/handoff-envelope.example.json, producer: "*", consumers: ["*"]}
+  - {id: demand-intake, schema_path: contracts/demand-intake.schema.json, template_path: templates/json/demand-intake.example.json, producer: copy-chief, consumers: [brief-master]}
+  - {id: execution-plan, schema_path: contracts/execution-plan.schema.json, template_path: templates/execution-plan-tmpl.md, producer: copy-chief, consumers: ["*"]}
+  - {id: brief, schema_path: contracts/brief.schema.json, template_path: templates/campaign-brief-tmpl.md, producer: brief-master, consumers: [audience-voc, offer-strategist, research-analyst, hook-angle-creator, conversion-copywriter, content-copywriter, ux-writer, video-social-scriptwriter, email-crm-copywriter, approval-owner]}
+  - {id: audience-voc, schema_path: contracts/audience-voc.schema.json, template_path: templates/json/audience-voc.example.json, producer: audience-voc, consumers: [brief-master, hook-angle-creator, conversion-copywriter, email-crm-copywriter]}
+  - {id: offer-canvas, schema_path: contracts/offer-canvas.schema.json, template_path: templates/offer-canvas-tmpl.md, producer: offer-strategist, consumers: [brief-master, hook-angle-creator, conversion-copywriter, compliance-checker]}
+  - {id: brand-voice-guide, schema_path: contracts/brand-voice-guide.schema.json, template_path: templates/brand-voice-guide-tmpl.md, producer: brand-voice-guardian, consumers: ["*"]}
+  - {id: research-packet, schema_path: contracts/research-packet.schema.json, template_path: templates/research-packet-tmpl.md, producer: research-analyst, consumers: [brief-master, hook-angle-creator, conversion-copywriter, content-copywriter, compliance-checker]}
+  - {id: angles, schema_path: contracts/angles.schema.json, template_path: templates/json/angles.example.json, producer: hook-angle-creator, consumers: [conversion-copywriter, content-copywriter, video-social-scriptwriter, email-crm-copywriter, ux-writer, approval-owner]}
+  - {id: conversion-copy, schema_path: contracts/conversion-copy.schema.json, template_path: templates/copy-deck-tmpl.md, producer: conversion-copywriter, consumers: [copy-editor]}
+  - {id: content-piece, schema_path: contracts/content-piece.schema.json, template_path: templates/json/content-piece.example.json, producer: content-copywriter, consumers: [copy-editor]}
+  - {id: ux-copy, schema_path: contracts/ux-copy.schema.json, template_path: templates/json/ux-copy.example.json, producer: ux-writer, consumers: [copy-editor]}
+  - {id: video-script, schema_path: contracts/video-script.schema.json, template_path: templates/video-script-tmpl.md, producer: video-social-scriptwriter, consumers: [copy-editor]}
+  - {id: email-journey, schema_path: contracts/email-journey.schema.json, template_path: templates/email-journey-tmpl.md, producer: email-crm-copywriter, consumers: [copy-editor]}
+  - {id: edit-report, schema_path: contracts/edit-report.schema.json, template_path: templates/json/edit-report.example.json, producer: copy-editor, consumers: [brand-voice-guardian]}
+  - {id: brand-review, schema_path: contracts/brand-review.schema.json, template_path: templates/json/brand-review.example.json, producer: brand-voice-guardian, consumers: [compliance-checker]}
+  - {id: compliance-review, schema_path: contracts/compliance-review.schema.json, template_path: templates/json/compliance-review.example.json, producer: compliance-checker, consumers: [copy-publisher, approval-owner, localization-specialist]}
+  - {id: localization, schema_path: contracts/localization.schema.json, template_path: templates/json/localization.example.json, producer: localization-specialist, consumers: [compliance-checker]}
+  - {id: approval-request, schema_path: contracts/approval-request.schema.json, template_path: templates/approval-request-tmpl.md, producer: copy-publisher, consumers: [approval-owner]}
+  - {id: approval-decision, schema_path: contracts/approval-decision.schema.json, template_path: templates/json/approval-decision.example.json, producer: approval-owner, consumers: [copy-publisher, knowledge-curator]}
+  - {id: publish-receipt, schema_path: contracts/publish-receipt.schema.json, template_path: templates/json/publish-receipt.example.json, producer: copy-publisher, consumers: [cro-analyst, knowledge-curator]}
+  - {id: performance-analysis, schema_path: contracts/performance-analysis.schema.json, template_path: templates/performance-report-tmpl.md, producer: cro-analyst, consumers: [knowledge-curator, copy-chief]}
+  - {id: learning-record, schema_path: contracts/learning-record.schema.json, template_path: templates/learning-record-tmpl.md, producer: knowledge-curator, consumers: [copy-chief, "*"]}
+  - {id: knowledge-query-result, schema_path: contracts/knowledge-query-result.schema.json, template_path: templates/json/knowledge-query-result.example.json, producer: knowledge-curator, consumers: ["*"]}
+  - {id: agent-run, schema_path: contracts/agent-run.schema.json, template_path: templates/json/agent-run.example.json, producer: "*", consumers: [cro-analyst, copy-chief]}
+  - {id: agent-evaluation, schema_path: contracts/agent-evaluation.schema.json, template_path: templates/json/agent-evaluation.example.json, producer: "copy-chief|approval-owner|script", consumers: [copy-chief]}
+
+modes:
+  full:
+    description: "Squad completo (padrão) — wf-copy-production / wf-campaign-launch"
+  mvp:
+    description: "Núcleo mínimo para começar com pouco volume: 10 agentes de IA mais o approval-owner (humano), conforme ADR-001 D22 e E6"
+    agents: [copy-chief, brief-master, research-analyst, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker, cro-analyst, copy-publisher]
+    human_roles: [approval-owner]
+    # O copy-publisher faz parte do mvp porque a governança depende dele para pacotes de aprovação e hash. Regras:
+    rules:
+      - "O copy-publisher monta todo approval-request (G1, G2, G3, G4 e amostragem) via prepare-approval-package; o payload_sha256 é calculado por scripts/approval_tools.py hash, nunca por modelo."
+      - "Nenhuma ação externa sem approval-decision com decision == approved, payload_sha256 idêntico ao do pedido e ao hash recalculado, dentro de decision.expires_at e com reviewer em human_gates.approvers."
+      - "approved_with_edits nunca autoriza execução: abre a rodada seguinte com novo hash (D2)."
+      - "O copy-chief contra-assina o preflight pós-decisão do copy-publisher (D8, E4); a execução externa é do humano ou da sessão principal (PUBLISH_EXECUTORS), o copy-publisher registra o publish-receipt e tudo vai ao journey log."
+      - "O brand-voice-guardian está no mvp porque o preflight exige brand-review (QG-BRAND e PUB-4 valem sem dispensa). Sem audience-voc, offer-strategist e knowledge-curator, essas funções entram como lacuna em execution-plan.gate_gaps (nenhum agente produtor valida a própria saída)."
+    # QG-LEARNING fica dispensado no mvp: o aprendizado fica em performance-analysis.next_actions até o knowledge-curator ser ativado (E6).
+    mvp_waivers:
+      - {gate: QG-LEARNING, reason: "knowledge-curator fora do mvp", replacement: "performance-analysis.next_actions", ref: "data/quality-gates.yaml mvp_waivers"}
+  fast_lane:
+    description: "Baixo risco, só uso interno ou teste (variações de headline, CTA e post não publicados) — wf-fast-variation, com QG-COMPLIANCE em modo leve; anúncio pago (high) e post orgânico (medium) saem da pista rápida (ADR-001, D6)"
+
+model_routing:
+  default_tier: standard
+  by_tier:
+    orchestrator: {model: sonnet, effort: medium}
+    tier_0: {model: sonnet, effort: medium}
+    tier_1: {model: sonnet, effort: medium}
+    tier_2: {model: sonnet, effort: high}      # verificação com contexto novo
+    tier_3: {model: sonnet, effort: medium}
+  overrides:
+    copy-publisher: {model: haiku, effort: low}   # empacotamento determinístico; o hash vem de scripts/approval_tools.py, nunca do modelo
+
+composition_mapping:
+  token: data/token-registry.yaml
+  atom: agents/*.md
+  molecule: tasks/*.md
+  organism: workflows/*.yaml
+  template: templates/**
+  instance: .data/copy-squad/{business}/{campaign_id}/
+  rules_ref: data/composition-rules.yaml
+
+accountability_owner: approval-owner
+
+stats:
+  agents: 19
+  ai_agents: 18
+  human_roles: 1
+  tasks: 42
+  workflows: 5
+  checklists: 20
+  templates: 11
+  contracts: 26
+  skills: 17
+  templates_json: 26
+  fixtures: 26
+  wrappers: 18
+  source: filesystem (2026-11-11)
+
+changelog:
+  - version: 1.0.0
+    date: '2026-11-10'
+    changes:
+    - "Criação do squad a partir da pesquisa do Homer (profissão, organograma, prompts, fluxo, DB, métricas, integração humana)"
+    - "Consolidações: Brief Intake→brief-master/copy-chief, PM→copy-chief, Version Control→copy-publisher, Asset Library→knowledge-curator, Audience+VoC, Offer+Positioning, Analytics+CRO"
+  - version: 1.0.1
+    date: '2026-11-10'
+    changes:
+    - "Revisão adversarial (6 lentes, 121 achados) e alinhamento ao ADR-001 (docs/governance-decisions.md, D1–D23)"
+    - "Ferramenta determinística scripts/approval_tools.py (hash, verify, sample, decide); wrappers com tools: explícito (menor privilégio)"
+  - version: 1.0.2
+    date: '2026-11-11'
+    changes:
+    - "Emendas E1–E8: decisão amarrada ao pedido (bound_to), verify --for-execution com payload.json obrigatório, flags de teste só em COPY_SQUAD_TEST_MODE"
+    - "Pastas de rodada em minúsculas, revisões versionadas, idempotency_key com pattern, MVP com copy-publisher e brand-voice-guardian"
+    - "Keywords das skills com complemento de copy; guard opcional scripts/guard_approval_decision.py (não ligado)"

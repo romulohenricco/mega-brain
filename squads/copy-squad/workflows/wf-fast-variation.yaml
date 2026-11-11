@@ -1,0 +1,636 @@
+# wf-fast-variation — pista rápida de baixo risco
+metadata:
+  id: wf-fast-variation
+  name: Variação rápida de baixo risco com amostragem humana
+  version: 1.0.0
+  atomic_layer: Organism
+  squad: copy-squad
+  owner: copy-chief
+  description: 'Pista rápida de uso interno (ADR-001 D6): poucas fases, com compliance leve independente (QG-COMPLIANCE em modo leve), com escalonamento obrigatório para wf-copy-production se surgir claim sensível. Nada é publicado, enviado ou veiculado aqui; publicar exige sair da pista para prepare-approval-package e G4.'
+  persistence_root: .data/copy-squad/{business}/{campaign_id}/
+best_for:
+- variações de headline, CTA ou texto curto para teste e uso interno (channel internal_only)
+- teste A/B de elementos já aprovados
+- lotes grandes de baixo risco com revisão humana por amostragem
+when_not_to_use:
+- qualquer claim de preço, garantia, resultado, autoridade, depoimento, comparativo, saúde ou financeiro
+- landing page, e-mail de venda ou promessa de resultado
+- 'publicação direta: este fluxo só entrega para uso interno'
+- 'post pronto para publicação (organic_post = medium) ou anúncio pago pronto para veiculação (paid_ad = high): seguir wf-copy-production, com prepare-approval-package e G4 (e G3 quando high)'
+- 'demanda de vsl: format vsl é do video-social-scriptwriter e segue wf-copy-production (nunca o conversion-copywriter)'
+inputs:
+  required:
+  - name: raw_request
+    type: string
+  - name: business
+    type: slug
+  optional:
+  - name: base_asset_id
+    type: string
+  - name: sampling_rate
+    type: number
+    default: 0.2
+state_machine:
+  initial: created
+  states:
+  - created
+  - phase-1_intake-plan
+  - phase-2_brief-lite
+  - phase-3_ideation
+  - phase-4_creation
+  - phase-5_editing
+  - phase-6_brand-voice
+  - phase-7_compliance-light
+  - phase-8_sampling
+  - awaiting_human_gate
+  - escalated_to_copy_chief
+  - failure_correction
+  - completed
+  - vetoed
+  - cancelled
+  terminal_states:
+  - completed
+  - vetoed
+  - cancelled
+  transitions:
+  - from: created
+    to: phase-1_intake-plan
+    'on': plan_approved
+    guard: demand_intake.missing_information == [] or questions_answered == true
+  - from: phase-1_intake-plan
+    to: phase-2_brief-lite
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-1_intake-plan
+    to: phase-1_intake-plan
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-1_intake-plan
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-1_intake-plan
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-2_brief-lite
+    to: phase-3_ideation
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-2_brief-lite
+    to: phase-2_brief-lite
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-2_brief-lite
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-2_brief-lite
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-3_ideation
+    to: phase-4_creation
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-3_ideation
+    to: phase-3_ideation
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-3_ideation
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-3_ideation
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-4_creation
+    to: phase-5_editing
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-4_creation
+    to: phase-4_creation
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-4_creation
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-4_creation
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-5_editing
+    to: phase-6_brand-voice
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-5_editing
+    to: phase-5_editing
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-5_editing
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-5_editing
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-6_brand-voice
+    to: phase-7_compliance-light
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-6_brand-voice
+    to: phase-6_brand-voice
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-6_brand-voice
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-6_brand-voice
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-7_compliance-light
+    to: phase-8_sampling
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and compliance_review.overall_risk == low
+  - from: phase-7_compliance-light
+    to: phase-7_compliance-light
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-7_compliance-light
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true or compliance_review.overall_risk in [medium, high]
+  - from: phase-7_compliance-light
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-8_sampling
+    to: completed
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and sampling.selected == false and g5_pending == false
+  - from: phase-8_sampling
+    to: phase-8_sampling
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-8_sampling
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-8_sampling
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-8_sampling
+    to: awaiting_human_gate
+    'on': sampling_requested
+    guard: sampling.selected == true; seleção determinística int(sha256(asset_id)[0:8], 16) / 0xFFFFFFFF < sampling_rate, calculada por approval_tools.py sample (data/risk-policy.yaml), pedido produzido pelo copy-publisher em 06-approval/{asset_id}/sampling-r{n}/, sem gate G1 a G4
+  - from: awaiting_human_gate
+    to: phase-8_sampling
+    'on': sampling_rejected
+    guard: approval_decision.decision == rejected and review_type == sampling; o lote inteiro reabre para rework (máx. 2 ciclos)
+  - from: awaiting_human_gate
+    to: completed
+    'on': sampling_approved
+    guard: approval_decision.decision == approved and review_type == sampling
+  - from: awaiting_human_gate
+    to: phase-8_sampling
+    'on': sampling_approved_with_edits
+    guard: approval_decision.decision == approved_with_edits and review_type == sampling; o copy-publisher aplica as edições e abre a rodada seguinte (sampling-r{n+1}) com novo payload_sha256, só approved conclui (ADR-001 D2); se a edição humana corrige falha de agente, o evento agent_failure leva a correct-agent-failure (G5)
+  - from: awaiting_human_gate
+    to: awaiting_human_gate
+    'on': approval_response_overdue
+    guard: review_type == sampling and now > approval_request.expires_at; silêncio nunca é aprovação, o pedido permanece pendente (sem veto automático) e o copy-chief reenvia ou escala (SLA_HUMAN_GATE_HOURS = 24; ADR-001 D3)
+  - from: escalated_to_copy_chief
+    to: phase-1_intake-plan
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-1_intake-plan
+  - from: escalated_to_copy_chief
+    to: phase-2_brief-lite
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-2_brief-lite
+  - from: escalated_to_copy_chief
+    to: phase-3_ideation
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-3_ideation
+  - from: escalated_to_copy_chief
+    to: phase-4_creation
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-4_creation
+  - from: escalated_to_copy_chief
+    to: phase-5_editing
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-5_editing
+  - from: escalated_to_copy_chief
+    to: phase-6_brand-voice
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-6_brand-voice
+  - from: escalated_to_copy_chief
+    to: phase-7_compliance-light
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-7_compliance-light
+  - from: escalated_to_copy_chief
+    to: phase-8_sampling
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-8_sampling
+  - from: escalated_to_copy_chief
+    to: vetoed
+    'on': escalation_denied
+    guard: copy_chief_or_approval_owner.decision == stop
+  - from: '*'
+    to: failure_correction
+    'on': agent_failure
+    guard: agent_run.status in [failed, escalated, blocked] and human_corrected == true
+  - from: failure_correction
+    to: phase-8_sampling
+    'on': g5_learning_registered
+    guard: learning_record.learning_status in [approved, draft]; segue para a fase de aprendizado (register-learning)
+  - from: failure_correction
+    to: escalated_to_copy_chief
+    'on': failure_unrecoverable
+    guard: human_corrected == false and rework_count >= 2; falha irrecuperável escala ao copy-chief e depois ao approval-owner, nunca vai direto a vetoed (ADR-001 E5)
+  - from: '*'
+    to: cancelled
+    'on': cancel
+    guard: requester or copy-chief cancels; nothing external was executed
+phases:
+- id: PHASE-1
+  slug: intake-plan
+  name: Intake rápido e verificação de elegibilidade
+  description: A pista rápida só existe para baixo risco. A elegibilidade é verificada antes de qualquer produção.
+  agents:
+  - copy-chief
+  parallel: false
+  tasks:
+  - task: tasks/intake-demand.md
+    agent: copy-chief
+    required: true
+    output: demand-intake
+  - task: tasks/plan-execution.md
+    agent: copy-chief
+    required: true
+    output: execution-plan
+  checkpoint:
+    criteria:
+    - demanda restrita a variações de headline, CTA ou texto curto para uso interno (channel internal_only)
+    - risk_level = low confirmado pela data/risk-policy.yaml
+    - nenhum claim de preço, garantia, resultado, autoridade, depoimento, comparativo, saúde ou financeiro
+    - execution-plan com workflow_id = wf-fast-variation
+    human_review: false
+    gate: null
+    message: Elegível para a pista rápida. Qualquer claim sensível escala para wf-copy-production.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/00-intake/
+- id: PHASE-2
+  slug: brief-lite
+  name: Brief enxuto e consulta à biblioteca
+  description: null
+  agents:
+  - brief-master
+  - knowledge-curator
+  parallel: false
+  tasks:
+  - task: tasks/retrieve-knowledge.md
+    agent: knowledge-curator
+    required: false
+    output: knowledge-query-result
+    condition: biblioteca com ângulos vencedores do negócio
+  - task: tasks/create-brief.md
+    agent: brief-master
+    required: true
+    output: brief
+    mode: lite
+  checkpoint:
+    criteria:
+    - brief com objetivo, público, canal e tom
+    - ângulo base ou ativo original referenciado
+    - itens ausentes listados em open_questions, sem inventar
+    human_review: false
+    gate: null
+    message: Brief enxuto pronto.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/01-strategy/
+- id: PHASE-3
+  slug: ideation
+  name: Ângulos e hooks em lote
+  description: null
+  agents:
+  - hook-angle-creator
+  parallel: false
+  tasks:
+  - task: tasks/generate-angles-hooks.md
+    agent: hook-angle-creator
+    required: true
+    output: angles
+  checkpoint:
+    criteria:
+    - 'ao menos 5 ângulos ou variações distintas (MIN_ANGLES_FAST_LANE = 5; o mínimo de 20 vale só nos workflows completos)'
+    - variações distintas entre si
+    - sem promessa sem prova
+    - risk_level low em todos
+    human_review: false
+    gate: null
+    message: Ângulos em lote prontos.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/03-angles/
+- id: PHASE-4
+  slug: creation
+  name: Variações de anúncio, CTA e social
+  description: null
+  agents:
+  - conversion-copywriter
+  - video-social-scriptwriter
+  parallel: true
+  tasks:
+  - task: tasks/write-ad-variations.md
+    agent: conversion-copywriter
+    required: false
+    output: conversion-copy
+    when: canal é anúncio
+  - task: tasks/optimize-ctas.md
+    agent: conversion-copywriter
+    required: false
+    output: conversion-copy
+    when: alvo é CTA
+  - task: tasks/write-social-captions.md
+    agent: video-social-scriptwriter
+    required: false
+    output: video-script
+    when: alvo é post ou legenda para backlog ou teste interno (post pronto para publicar sai da pista, risco medium)
+  checkpoint:
+    criteria:
+    - cada variação com hipótese declarada em variations[].hypothesis
+    - limites de caracteres do canal respeitados
+    - nenhum claim sensível introduzido
+    - variações destinadas a backlog, teste ou uso interno (channel internal_only); nada é publicado, enviado ou veiculado
+    human_review: false
+    gate: null
+    message: Variações v1 criadas.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/
+- id: PHASE-5
+  slug: editing
+  name: Edição por concisão
+  description: null
+  agents:
+  - copy-editor
+  parallel: false
+  tasks:
+  - task: tasks/edit-for-concision.md
+    agent: copy-editor
+    required: true
+    output: edit-report
+  checkpoint:
+    criteria:
+    - reduction_pct entre 20 e 40% quando houver excesso
+    - claims preservados
+    - edit-report emitido
+    human_review: false
+    gate: null
+    message: Variações enxutas.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/
+- id: PHASE-6
+  slug: brand-voice
+  name: Revisão de voz
+  description: null
+  agents:
+  - brand-voice-guardian
+  parallel: false
+  tasks:
+  - task: tasks/review-brand-voice.md
+    agent: brand-voice-guardian
+    required: true
+    output: brand-review
+  checkpoint:
+    criteria:
+    - brand_alignment_score >= 80
+    - sem issue crítico
+    - 'claim sensível detectado: parar e escalar para wf-copy-production'
+    human_review: false
+    gate: null
+    message: Voz revisada. Detecção de claim sensível encerra a pista rápida.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/brand-review-v{n}.json
+- id: PHASE-7
+  slug: compliance-light
+  name: Compliance leve e reclassificação independente de risco
+  description: O compliance-checker reclassifica o risco de forma independente, sem confiar só na declaração do produtor, em modo leve.
+  agents:
+  - compliance-checker
+  parallel: false
+  tasks:
+  - task: tasks/check-compliance.md
+    agent: compliance-checker
+    required: true
+    output: compliance-review
+    mode: lite
+  checkpoint:
+    criteria:
+    - overall_risk reclassificado de forma independente pelo compliance-checker
+    - overall_risk = low confirmado
+    - 'claim sensível encontrado: parar, elevar o risco e escalar para wf-copy-production'
+    human_review: false
+    gate: null
+    message: Compliance leve concluído. Risco acima de low encerra a pista rápida.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/compliance-review-v{n}.json
+- id: PHASE-8
+  slug: sampling
+  name: Amostragem humana de 20% e entrega interna
+  description: null
+  agents:
+  - copy-publisher
+  - approval-owner
+  - knowledge-curator
+  parallel: false
+  tasks:
+  - task: tasks/prepare-approval-package.md
+    agent: copy-publisher
+    required: false
+    output: approval-request
+    condition: asset_id selecionado pela amostragem (approval_tools.py sample retorna true)
+    gate: SAMPLING
+    note: 'único produtor de approval-request (ADR-001 D5); gate SAMPLING, operation internal_use, pasta 06-approval/{asset_id}/sampling-r{n}/'
+  - task: tasks/approve-gate.md
+    agent: approval-owner
+    required: false
+    output: approval-decision
+    condition: asset_id selecionado pela amostragem
+    gate: SAMPLING
+    sampling_rate: 0.2
+    note: 'SAMPLING_RATE_LOW = 0.20: o humano revisa a amostra de 20% das variações, selecionada de forma determinística por sha256(asset_id) com approval_tools.py sample (data/risk-policy.yaml); decisão registrada como approval-decision com operation internal_use'
+  - task: tasks/correct-agent-failure.md
+    agent: approval-owner
+    required: false
+    output: learning-record
+    condition: o humano corrigiu output de agente na amostra
+    gate: G5
+    note: G5 não usa approval-request; a correção vira learning-record (ADR-001 D5)
+  - task: tasks/register-learning.md
+    agent: knowledge-curator
+    required: true
+    output: learning-record
+  checkpoint:
+    criteria:
+    - amostra de 20% selecionada de forma reprodutível e registrada
+    - approved_with_edits na amostra não conclui; abre a rodada seguinte com novo payload_sha256
+    - amostra reprovada reabre o lote inteiro para rework (máx. 2 ciclos)
+    - aprendizado registrado
+    - entrega é apenas interna; publicar exige wf-copy-production ou wf-performance-loop
+    human_review: true
+    gate: null
+    message: Lote liberado para uso interno após a amostragem.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/06-approval/
+quality_gates:
+- gate_id: QG-INTAKE
+  after_phase: PHASE-1
+  checklist: checklists/intake-checklist.md
+  executor: brief-master
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-DRAFT
+  after_phase: PHASE-4
+  checklist: checklists/conversion-copy-checklist.md
+  executor: copy-chief
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-EDIT
+  after_phase: PHASE-5
+  checklist: checklists/edit-quality-checklist.md
+  executor: copy-chief
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-BRAND
+  after_phase: PHASE-6
+  checklist: checklists/brand-voice-review-checklist.md
+  executor: brand-voice-guardian
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-COMPLIANCE
+  after_phase: PHASE-7
+  checklist: checklists/compliance-checklist.md
+  executor: compliance-checker
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+human_gates:
+- gate: sampling
+  after_phase: PHASE-8
+  owner: approval-owner
+  task: tasks/approve-gate.md
+  required_when: ativo selecionado pela amostragem determinística de risco low (sem gate G1 a G4 por peça)
+  ttl_hours: 72
+  decision_contract: contracts/approval-decision.schema.json
+  note: Revisão por amostragem registrada como approval-decision com operation internal_use; risco medium/high não usa este fluxo. Só approved conclui a amostra.
+  approval_request_gate: SAMPLING
+- gate: G5
+  after_phase: PHASE-8
+  owner: approval-owner
+  task: tasks/correct-agent-failure.md
+  required_when: sempre que humano corrigir output
+  note: G5 não usa approval-request nem approval-decision. A correção da amostra passa por correct-agent-failure e vira learning-record.
+error_handling:
+  retry:
+    max_attempts: 2
+    backoff: imediato com contexto novo; sem repetir o mesmo prompt
+    applies_to: falha técnica de agente, schema inválido, envelope incompleto
+  rework_loop:
+    max_cycles: 2
+    on_exceeded: estado escalated_to_copy_chief (transição rework_exhausted) e depois approval-owner; nunca forçar aprovação
+    rule: o produtor corrige somente os itens apontados pelo validador; versão nova v{n+1}, a anterior é preservada
+  escalation:
+  - to: copy-chief
+    when: veto de quality gate, conflito entre validadores, contrato inválido após retry
+  - to: approval-owner
+    when: decisão estratégica, claim sem fonte, risco high não mitigado, rework esgotado
+  on_veto: interromper a fase, registrar handoff com status blocked, abrir correct-agent-failure quando o humano corrigir o output (G5) e registrar
+    o learning via register-learning
+  on_timeout: 'silêncio nunca é aprovação (expires_at = criação + 72h): o pedido permanece em awaiting_human_gate, o copy-chief reenvia ou escala conforme o SLA de 24h; decisão vencida (72h após decided_at) não autoriza nada; nada é publicado (entrega apenas interna)'
+  escalation_to_workflow:
+    trigger: claim_type sensível detectado em qualquer fase
+    action: parar a pista rápida, elevar risk_level para high e reiniciar em wf-copy-production a partir do brief
+    owner: copy-chief
+  failure_path:
+    steps:
+    - tasks/correct-agent-failure.md (G5)
+    - tasks/register-learning.md
+completion_signals:
+- todas as fases concluídas com score >= 0.80
+- amostra de 20% aprovada pelo approval-owner
+- nenhum claim sensível encontrado
+- variações entregues para uso interno com hipótese declarada
+- learning-record emitido
+outputs:
+- artifact: brief
+  path: .data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json
+- artifact: angles
+  path: .data/copy-squad/{business}/{campaign_id}/03-angles/angles.json
+- artifact: variations
+  path: .data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json
+- artifact: edit-report
+  path: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/edit-report-v{n}.json
+- artifact: brand-review
+  path: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/brand-review-v{n}.json
+- artifact: sampling-decision
+  path: .data/copy-squad/{business}/{campaign_id}/06-approval/
+- artifact: handoffs
+  path: .data/copy-squad/{business}/{campaign_id}/handoffs.jsonl
+agents_by_phase:
+  PHASE-1:
+  - copy-chief
+  PHASE-2:
+  - brief-master
+  - knowledge-curator
+  PHASE-3:
+  - hook-angle-creator
+  PHASE-4:
+  - conversion-copywriter
+  - video-social-scriptwriter
+  PHASE-5:
+  - copy-editor
+  PHASE-6:
+  - brand-voice-guardian
+  PHASE-7:
+  - compliance-checker
+  PHASE-8:
+  - approval-owner
+  - copy-publisher
+  - knowledge-curator
+quality_checklist:
+- Risco low confirmado antes e depois da criação, inclusive pela reclassificação independente do compliance-checker
+- Nenhuma variação publicada nesta pista
+- Amostra de 20% registrada
+- Produtor diferente do validador
+- Hipótese declarada em cada variação
+handoffs_to_other_workflows:
+- to_workflow: wf-copy-production
+  when: claim sensível detectado ou necessidade de publicar (publicar exige prepare-approval-package e G4, mais G3 e compliance completo se high)
+  payload:
+  - brief
+  - angles
+- to_workflow: wf-performance-loop
+  when: variações vão para teste real
+  payload:
+  - variations

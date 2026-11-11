@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:agent-evaluation:v1",
+  "title": "Agent Evaluation (avaliação de agente)",
+  "description": "Avaliação de uma execução de agente em uma das três camadas (qualidade, operacional, negócio), registrada em .data/copy-squad/_telemetry/agent-evaluations.jsonl (append-only).",
+  "type": "object",
+  "required": [
+    "evaluation_id",
+    "agent_run_id",
+    "agent_name",
+    "evaluator",
+    "layer",
+    "metric_name",
+    "score",
+    "passed",
+    "created_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "evaluation_id": {
+      "type": "string",
+      "pattern": "^evl-"
+    },
+    "agent_run_id": {
+      "type": "string",
+      "pattern": "^run-"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "evaluator": {
+      "type": "string"
+    },
+    "layer": {
+      "enum": [
+        "quality",
+        "operational",
+        "business"
+      ]
+    },
+    "metric_name": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number"
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "feedback": {
+      "type": "string"
+    },
+    "seniority_level_observed": {
+      "enum": [
+        "junior",
+        "pleno",
+        "senior",
+        "lead",
+        "director"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "business": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Slug da unidade de negócio avaliada (opcional); isola a telemetria por negócio."
+    }
+  }
+}

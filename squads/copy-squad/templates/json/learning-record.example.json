@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "lrn-exemplo",
+    "artifact_type": "learning-record",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "knowledge-curator",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "origin": "cro",
+  "result": "Exemplo de resultado",
+  "decision": "Exemplo de decisão",
+  "next_action": "Exemplo de próxima ação",
+  "applies_to": {
+    "channel": "email"
+  },
+  "learning_status": "draft"
+}

@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "apd-lp-mentoria-v2",
+    "artifact_type": "approval-decision",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "approval-owner",
+    "produced_at": "2026-11-10T16:10:00-03:00",
+    "version": 1,
+    "status": "approved",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "approval_request_id": "apr-lp-mentoria-v2",
+  "bound_to": {
+    "gate": "G4",
+    "operation": "publish",
+    "destination": "landing page da mentoria (CMS), publicação manual pelo responsável",
+    "channel": "landing_page"
+  },
+  "decision": "approved",
+  "reviewer": "responsavel-oferta",
+  "decided_at": "2026-11-10T16:10:00-03:00",
+  "payload_sha256": "ee95da7e29203a1fbb8c1702f9f613e7d019448d1e886adddcb00cd655d52610",
+  "comments": "Mensagem do humano no chat (exemplo ilustrativo): \"Garantia confirmada com o dono da oferta; seguir com a publicação.\"",
+  "edits": [],
+  "conditions": [
+    "Publicar somente dentro da validade desta decisão"
+  ],
+  "expires_at": "2026-11-13T16:10:00-03:00",
+  "human_attested": true,
+  "recorded_via": "human-chat-confirmed"
+}

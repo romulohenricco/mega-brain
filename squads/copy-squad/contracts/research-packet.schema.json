@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:research-packet:v1",
+  "title": "Pacote de Pesquisa",
+  "description": "Pacote de pesquisa de mercado e concorrência: contexto, concorrentes e claims, temas e paráfrases da linguagem do cliente, objeções, ativos de prova, fatos com status de verificação e lacunas.",
+  "type": "object",
+  "required": [
+    "meta",
+    "brief_id",
+    "market_context",
+    "facts",
+    "gaps",
+    "confidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "brief_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "market_context": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "positioning": {
+            "type": "string"
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "differentiator": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "customer_language": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Somente TEMAS e PARÁFRASES da linguagem do cliente (sem citação literal e sem dado que reidentifique alguém). Citação literal vem exclusivamente de audience-voc.customer_phrases, com anonymized, reuse e usage_rights (D17)."
+    },
+    "objections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objection": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "response_angle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objection"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "proof_assets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "$ref": "#/$defs/source"
+          },
+          "status": {
+            "enum": [
+              "verified",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "statement",
+          "source",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

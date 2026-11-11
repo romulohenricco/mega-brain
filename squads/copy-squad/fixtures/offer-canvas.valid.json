@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "ofr-fluxo-caixa-001",
+    "artifact_type": "offer-canvas",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "offer-strategist",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.8,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ]
+  },
+  "promise": "Organizar o fluxo de caixa em 8 semanas com rotina semanal guiada",
+  "mechanism": "Rotina semanal de 30 minutos com modelos prontos e encontros de revisão em grupo",
+  "proof_stack": [
+    {
+      "proof_id": "prv-depoimento-01",
+      "type": "testimonial",
+      "summary": "Depoimento ilustrativo ainda não coletado",
+      "source": "Pendente de coleta",
+      "verified": false,
+      "usage_rights": "unknown"
+    },
+    {
+      "proof_id": "prv-demo-01",
+      "type": "demo",
+      "summary": "Demonstração do modelo de caixa semanal",
+      "source": ".data/copy-squad/pme-financas-exemplo/_library/modelo-caixa.md",
+      "verified": true,
+      "usage_rights": "granted"
+    }
+  ],
+  "price": {
+    "amount": 1500,
+    "currency": "BRL",
+    "payment_terms": "Valor ilustrativo, aguardando definição do negócio"
+  },
+  "guarantee": {
+    "type": "A definir",
+    "terms": "Aguardando política do negócio"
+  },
+  "bonuses": [
+    "Planilha de projeção de caixa"
+  ],
+  "risk_reversal": "A definir após decisão sobre garantia",
+  "legitimate_urgency": {
+    "exists": false,
+    "reason": "Não há prazo ou limite real confirmado"
+  },
+  "positioning": {
+    "category": "Mentoria prática de gestão financeira para pequenas empresas",
+    "differentiators": [
+      "Foco em rotina semanal",
+      "Modelos prontos"
+    ],
+    "competitors_reference": [
+      "Cursos genéricos de finanças"
+    ],
+    "messaging_house": {
+      "central_message": "Previsibilidade de caixa com uma rotina semanal simples (exemplo ilustrativo)",
+      "pillars": [
+        {
+          "pillar": "Rotina semanal curta",
+          "proof_ids": [
+            "prv-demo-01"
+          ]
+        },
+        {
+          "pillar": "Modelos prontos",
+          "proof_ids": [
+            "prv-demo-01"
+          ]
+        }
+      ]
+    }
+  },
+  "sale_angles": [
+    "Previsibilidade antes de crescimento"
+  ],
+  "objection_responses": [
+    {
+      "objection": "Não tenho tempo",
+      "response": "A rotina semanal foi desenhada para caber em 30 minutos.",
+      "proof_ids": [
+        "prv-demo-01"
+      ],
+      "mechanism": "Rotina semanal"
+    }
+  ],
+  "needs_approval": [
+    "price",
+    "guarantee",
+    "testimonial"
+  ]
+}

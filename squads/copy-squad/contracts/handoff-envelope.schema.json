@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:handoff-envelope:v1",
+  "title": "Envelope de Handoff",
+  "description": "Envelope append-only (handoffs.jsonl) que acompanha toda passagem de artefato entre agentes do copy-squad: quem entregou, para quem, qual contrato, status, confiança, risco e se exige aprovação humana.",
+  "type": "object",
+  "required": [
+    "envelope_id",
+    "campaign_id",
+    "business",
+    "from_agent",
+    "to_agent",
+    "input_ids",
+    "output_id",
+    "artifact_type",
+    "artifact_path",
+    "status",
+    "confidence",
+    "risk_level",
+    "human_approval_required",
+    "created_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "envelope_id": {
+      "type": "string",
+      "pattern": "^env-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "business": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "from_agent": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$"
+    },
+    "to_agent": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$"
+    },
+    "input_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "output_id": {
+      "type": "string"
+    },
+    "artifact_type": {
+      "type": "string"
+    },
+    "artifact_path": {
+      "type": "string",
+      "pattern": "^\\.data/copy-squad/"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "needs_input",
+        "needs_approval",
+        "blocked",
+        "failed"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "risk_level": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "human_approval_required": {
+      "type": "boolean"
+    },
+    "gate": {
+      "enum": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "SAMPLING",
+        null
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "envelope_id": "env-brf-fluxo-caixa-001-exemplo",
+  "campaign_id": "camp-fluxo-caixa-lancamento",
+  "business": "pme-financas-exemplo",
+  "from_agent": "brief-master",
+  "to_agent": "approval-owner",
+  "input_ids": [
+    "dmd-fluxo-caixa-001"
+  ],
+  "output_id": "brf-fluxo-caixa-001",
+  "artifact_type": "brief",
+  "artifact_path": ".data/copy-squad/pme-financas-exemplo/camp-fluxo-caixa-lancamento/01-strategy/brief.json",
+  "status": "needs_approval",
+  "confidence": 0.82,
+  "assumptions": [
+    "O preço da mentoria ainda não foi confirmado pelo negócio."
+  ],
+  "sources": [
+    {
+      "title": "Entrevista interna de descoberta (exemplo ilustrativo)",
+      "locator": ".data/copy-squad/pme-financas-exemplo/_library/entrevista-exemplo.md",
+      "type": "internal",
+      "accessed_at": "2026-11-09",
+      "summary": "Resumo ilustrativo de uma conversa com o time comercial."
+    }
+  ],
+  "risk_level": "medium",
+  "human_approval_required": true,
+  "gate": "G1",
+  "reason": "Brief consolidado aguardando aprovação do G1 antes de iniciar pesquisa e ângulos.",
+  "created_at": "2026-11-10T14:05:00Z"
+}

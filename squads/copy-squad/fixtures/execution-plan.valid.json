@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "pln-fluxo-caixa-001",
+    "artifact_type": "execution-plan",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "copy-chief",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.8,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ]
+  },
+  "demand_id": "dmd-fluxo-caixa-001",
+  "objective": "Produzir página de vendas e sequência de e-mails da mentoria com aprovação humana antes de publicar",
+  "demand_type": "conversion",
+  "risk_level": "high",
+  "workflow_id": "wf-copy-production",
+  "steps": [
+    {
+      "step": 1,
+      "agent": "brief-master",
+      "task": "tasks/create-brief.md",
+      "input_required": [
+        "demand-intake"
+      ],
+      "output_contract": "brief",
+      "human_approval": false,
+      "gate": null,
+      "success_criteria": [
+        "Brief com 3 ou mais critérios de aceite mensuráveis"
+      ]
+    },
+    {
+      "step": 2,
+      "agent": "brief-master",
+      "task": "tasks/consolidate-brief.md",
+      "input_required": [
+        "brief",
+        "audience-voc",
+        "offer-canvas"
+      ],
+      "output_contract": "brief",
+      "human_approval": true,
+      "gate": "G1",
+      "success_criteria": [
+        "Decisão G1 registrada"
+      ]
+    },
+    {
+      "step": 3,
+      "agent": "research-analyst",
+      "task": "tasks/build-research-packet.md",
+      "input_required": [
+        "brief"
+      ],
+      "output_contract": "research-packet",
+      "human_approval": false,
+      "gate": null,
+      "success_criteria": [
+        "Todo fato com fonte e status"
+      ]
+    },
+    {
+      "step": 4,
+      "agent": "hook-angle-creator",
+      "task": "tasks/generate-angles-hooks.md",
+      "input_required": [
+        "brief",
+        "research-packet"
+      ],
+      "output_contract": "angles",
+      "human_approval": true,
+      "gate": "G2",
+      "success_criteria": [
+        "20 ou mais ângulos ranqueados"
+      ]
+    },
+    {
+      "step": 5,
+      "agent": "conversion-copywriter",
+      "task": "tasks/write-landing-page.md",
+      "input_required": [
+        "angles",
+        "offer-canvas"
+      ],
+      "output_contract": "conversion-copy",
+      "human_approval": false,
+      "gate": null,
+      "success_criteria": [
+        "Claims sensíveis listados em needs_approval"
+      ]
+    }
+  ],
+  "missing_information": [
+    "Preço",
+    "Garantia"
+  ],
+  "estimated_effort": "5 a 7 dias úteis (exemplo ilustrativo)",
+  "next_action": "Enviar as perguntas pendentes ao approval-owner e aguardar respostas antes do passo 1."
+}

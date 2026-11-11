@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "kqr-garantia-lp",
+    "artifact_type": "knowledge-query-result",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "knowledge-curator",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.8,
+    "risk_level": "low",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "query": "ângulos aprovados de garantia para landing page da mentoria",
+  "filters": {
+    "type": [
+      "angle",
+      "learning"
+    ],
+    "asset_status": "approved"
+  },
+  "results": [
+    {
+      "asset_id": "lrn-garantia-perto-cta",
+      "title": "Garantia com prazo e termos",
+      "type": "learning",
+      "asset_status": "approved",
+      "summary": "Regra aprendida: citar garantia sempre com prazo e termos confirmados.",
+      "source_path": ".data/copy-squad/exemplo-negocio/_library/learnings/lrn-garantia-perto-cta.json",
+      "performance": {
+        "note": "sem dados de desempenho ainda"
+      },
+      "relevance": 0.92
+    }
+  ],
+  "missing_knowledge": [
+    "Nenhum ângulo aprovado com prova de resultado de clientes (não inventar; solicitar fonte)"
+  ]
+}

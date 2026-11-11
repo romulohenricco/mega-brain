@@ -1,0 +1,502 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Quality gates automáticos do Copy Squad: 11 portões com executor validador
+    diferente do produtor (AP05), checklist, critérios ponderados, limiares
+    APPROVE/REVIEW/VETO, condições de veto e ações de retrabalho e escalonamento.
+  created_at: "2026-11-10"
+  scale: "0-1 fractional (canônica; ver data/composition-rules.yaml quality_gate_scale)"
+  notes: |
+    Modelo de 3 estados:
+      - APPROVE: score >= approve_score e nenhuma veto_condition ativa → segue o fluxo.
+      - REVIEW:  review_score <= score < approve_score → devolve ao produtor com
+                 feedback específico (rework), no máximo REWORK_MAX_CYCLES (2) ciclos.
+      - VETO:    score < veto_score, ou qualquer veto_condition ativa → bloqueia a
+                 transição de fase e escala.
+    veto_conditions são paradas duras: uma só delas veta mesmo com score alto.
+    Gate humano (G1–G5) é independente: quality gate aprovado não substitui
+    aprovação humana exigida por data/risk-policy.yaml.
+    Campos: producer = quem produziu o artefato avaliado; executor = quem aplica o
+    checklist e decide o gate (sempre ≠ producer); self_check_by = produtor, que pode
+    fazer autoverificação prévia (não conta como aprovação).
+    Esta tabela de executores é a canônica (ADR-001, D7, em docs/governance-decisions.md):
+    INTAKE=brief-master, BRIEF=copy-chief, RESEARCH=compliance-checker, ANGLES=copy-chief,
+    DRAFT=copy-chief (checklist do formato), EDIT=copy-chief, BRAND=brand-voice-guardian,
+    COMPLIANCE=compliance-checker, LOCALIZATION=compliance-checker,
+    PUBLISH-PREFLIGHT=copy-chief (contra-assina o preflight do copy-publisher; pós-decisão, E4),
+    LEARNING=cro-analyst. Checklists e workflows seguem esta tabela.
+
+defaults:
+  approve_score: 0.80          # token QG_APPROVE_MIN
+  review_score: 0.60           # token QG_REVIEW_MIN
+  veto_score: 0.60             # abaixo disso = VETO (REVIEW termina em 0.79)
+  max_rework_cycles: 2         # token REWORK_MAX_CYCLES
+  on_rework_exhausted: escalate_to_copy_chief
+  scoring: "score = itens atendidos ponderados / total ponderado; item blocking com falha ativa veto_condition"
+  result_record: "Resultado de cada gate vira linha em handoffs.jsonl (campo gate/reason) e, quando falha, evento no journey log."
+  escalation_targets:
+    quality_veto: copy-chief
+    risk_or_claim_veto: approval-owner
+
+quality_gates:
+
+# ----------------------------------------------------------------------------
+- id: QG-INTAKE
+  name: intake_completeness
+  stage: intake
+  gated_artifact: demand-intake
+  producer: copy-chief
+  executor: brief-master
+  self_check_by: copy-chief
+  checklist: checklists/intake-checklist.md
+  related_tasks: [intake-demand, plan-execution]
+  criteria:
+    - {id: INT-1, check: "Objetivo de negócio e KPI primário identificados ou listados em missing_information", weight: 3, blocking: true}
+    - {id: INT-2, check: "demand_type classificado em um dos 7 tipos", weight: 2, blocking: true}
+    - {id: INT-3, check: "Canal, público e oferta (ou hints) presentes ou marcados como lacuna", weight: 2, blocking: false}
+    - {id: INT-4, check: "No máximo 5 perguntas, objetivas e necessárias (MAX_CLARIFYING_QUESTIONS)", weight: 2, blocking: true}
+    - {id: INT-5, check: "Nenhum dado inventado: preço, garantia e prazo ausentes aparecem como lacuna", weight: 3, blocking: true}
+    - {id: INT-6, check: "Prazo e restrições (legais, de marca, de canal) registradas", weight: 1, blocking: false}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - more_than_5_questions
+    - invented_fact_in_intake
+    - demand_type_missing
+    - business_slug_missing
+  on_review:
+    action: rework_to_producer
+    target: copy-chief
+    max_cycles: 2
+    feedback: "Lista de itens falhos do checklist com o campo do contrato a corrigir."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Intake não pode avançar: devolver ao solicitante com as lacunas bloqueantes."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-BRIEF
+  name: brief_quality
+  stage: strategy
+  gated_artifact: brief
+  producer: brief-master
+  executor: copy-chief
+  self_check_by: brief-master
+  checklist: checklists/brief-quality-checklist.md
+  supporting_checklists:
+    - checklists/audience-voc-checklist.md
+    - checklists/offer-quality-checklist.md
+  related_tasks: [create-brief, consolidate-brief, map-audience, extract-voc, design-offer, map-objections, build-proof-stack]
+  g3_oferta_note: "G3 de oferta (D10): preço, garantia, provas e depoimentos do offer-canvas são aprovados antes da produção, no mesmo pacote do G1, quando o risco é high ou há claim sensível. Quem monta o pacote é o copy-publisher (prepare-approval-package)."
+  criteria:
+    - {id: BRF-1, check: "Objetivo de negócio, KPI primário e métrica de sucesso definidos", weight: 3, blocking: true}
+    - {id: BRF-2, check: "Público com segmento, dores, desejos, objeções e awareness_stage", weight: 3, blocking: true}
+    - {id: BRF-3, check: "Oferta com promessa; preço, garantia e prova só quando confirmados", weight: 3, blocking: true}
+    - {id: BRF-4, check: "Fatos confirmados separados de hipóteses a validar", weight: 2, blocking: true}
+    - {id: BRF-5, check: "Critérios de aceite mensuráveis (mínimo 1) e restrições de marca, legais e de canal", weight: 2, blocking: true}
+    - {id: BRF-6, check: "Provas do offer-canvas com source e usage_rights; claims sem prova marcados needs_approval", weight: 2, blocking: false}
+    - {id: BRF-7, check: "Objeções mapeadas por categoria com resposta e evidência", weight: 1, blocking: false}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - promise_without_confirmation
+    - price_or_guarantee_assumed
+    - acceptance_criteria_missing
+    - facts_and_hypotheses_mixed
+  on_review:
+    action: rework_to_producer
+    target: brief-master
+    max_cycles: 2
+    feedback: "Campos do brief reprovados e a pergunta necessária para fechar cada lacuna."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Brief vetado: sem confirmação humana não há G1; reabrir intake se faltar objetivo."
+  human_gate: G1            # obrigatório em risco medium/high
+
+# ----------------------------------------------------------------------------
+- id: QG-RESEARCH
+  name: research_reliability
+  stage: research
+  gated_artifact: research-packet
+  producer: research-analyst
+  executor: compliance-checker
+  self_check_by: research-analyst
+  checklist: checklists/research-quality-checklist.md
+  related_tasks: [build-research-packet, find-competitive-angles]
+  criteria:
+    - {id: RSP-1, check: "Toda fonte com título, locator e tipo; fato sem fonte marcado unverified", weight: 3, blocking: true}
+    - {id: RSP-2, check: "Percentual de facts verified >= 70% (MIN_VERIFIED_FACTS_PCT)", weight: 2, blocking: false}
+    - {id: RSP-3, check: "Fato, inferência e hipótese separados; nenhuma inferência apresentada como fato", weight: 3, blocking: true}
+    - {id: RSP-4, check: "Concorrentes com posicionamento, claims e source_url; sem copiar texto de terceiros", weight: 2, blocking: false}
+    - {id: RSP-5, check: "Linguagem do cliente com origem rastreável (nada parafraseado como citação)", weight: 2, blocking: false}
+    - {id: RSP-6, check: "gaps explícitos e confidence >= 0.60 (MIN_RESEARCH_CONFIDENCE) ou lacuna escalada", weight: 2, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - fabricated_source
+    - unverified_presented_as_fact
+    - customer_data_from_other_business
+    - no_gaps_declared_with_low_confidence
+  on_review:
+    action: rework_to_producer
+    target: research-analyst
+    max_cycles: 2
+    feedback: "Facts sem fonte, lacunas ausentes e fontes sem locator."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Pesquisa vetada: ângulos não podem se apoiar em fonte inventada ou dado de outro negócio."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-ANGLES
+  name: angle_bank_quality
+  stage: ideation
+  gated_artifact: angles
+  producer: hook-angle-creator
+  executor: copy-chief
+  self_check_by: hook-angle-creator
+  checklist: checklists/angle-quality-checklist.md
+  related_tasks: [generate-angles-hooks]
+  criteria:
+    - {id: ANG-1, check: "No mínimo 20 ângulos distintos nos workflows completos (MIN_ANGLES_FULL) ou 5 na fast_lane (MIN_ANGLES_FAST_LANE; desvio consciente do mínimo de 20 da pesquisa, só para uso interno em risco low)", weight: 3, blocking: true}
+    - {id: ANG-2, check: "Cada ângulo com promessa específica, mecanismo e prova possível", weight: 3, blocking: true}
+    - {id: ANG-3, check: "Ângulos distintos entre si (sem reescrita da mesma promessa)", weight: 2, blocking: false}
+    - {id: ANG-4, check: "Nenhuma escassez, urgência ou autoridade falsa; urgência só com legitimate_urgency.exists", weight: 3, blocking: true}
+    - {id: ANG-5, check: "Ângulo dependente de aprovação legal ou comercial marcado needs_approval", weight: 2, blocking: true}
+    - {id: ANG-6, check: "Ranking por predicted_strength com reason registrada e shortlist de 5 (ANGLES_SHORTLIST_SIZE) para o G2", weight: 1, blocking: false}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - false_scarcity_or_authority
+    - result_promise_without_evidence
+    - fewer_angles_than_minimum_without_justification
+  on_review:
+    action: rework_to_producer
+    target: hook-angle-creator
+    max_cycles: 2
+    feedback: "Ângulos repetidos, sem prova ou sem mecanismo."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Banco de ângulos vetado; não segue para G2 nem para produção."
+  human_gate: G2            # risco high ou campanha multi-ativo
+
+# ----------------------------------------------------------------------------
+- id: QG-DRAFT
+  name: draft_contract_and_brief_adherence
+  stage: creation
+  gated_artifact: "conversion-copy | content-piece | ux-copy | video-script | email-journey"
+  producer: "conversion-copywriter | content-copywriter | ux-writer | video-social-scriptwriter | email-crm-copywriter"
+  executor: copy-chief
+  self_check_by: "o copywriter dono do draft"   # produtor; autoverificação não aprova o gate
+  checklist: checklists/conversion-copy-checklist.md
+  checklist_by_format:        # D7: o executor aplica o checklist do formato do draft
+    conversion-copy: checklists/conversion-copy-checklist.md
+    content-piece: checklists/content-quality-checklist.md
+    ux-copy: checklists/ux-copy-checklist.md
+    video-script: checklists/video-script-checklist.md
+    email-journey: checklists/email-crm-checklist.md
+  related_tasks: [write-landing-page, write-ad-variations, optimize-ctas, build-email-sequence, write-crm-message, write-content-piece, repurpose-asset, write-video-script, write-social-captions, write-ux-microcopy, audit-ux-copy]
+  criteria:
+    - {id: DRF-1, check: "Draft valida no schema do contrato e tem meta completo", weight: 3, blocking: true}
+    - {id: DRF-2, check: "Aderência ao brief: objetivo, público, awareness_stage, canal, must_include/must_avoid", weight: 3, blocking: true}
+    - {id: DRF-3, check: "Usa apenas ângulo aprovado e provas do research-packet/offer-canvas", weight: 3, blocking: true}
+    - {id: DRF-4, check: "Claims sem prova marcados needs_approval; nenhum depoimento, número ou prêmio inventado", weight: 3, blocking: true}
+    - {id: DRF-5, check: "CTA específico e coerente com a ação do brief (MIN_CTA_CLARITY_SCORE)", weight: 2, blocking: false}
+    - {id: DRF-6, check: "Limites de caractere e formato do canal respeitados (data/channel-specs.yaml)", weight: 1, blocking: false}
+    - {id: DRF-7, check: "Versão salva como v{n} sem sobrescrever versão anterior", weight: 1, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - invented_testimonial_or_number
+    - unapproved_angle_used
+    - false_scarcity
+    - schema_violation
+    - draft_overwrote_previous_version
+  on_review:
+    action: rework_to_producer
+    target: producer_of_artifact
+    max_cycles: 2
+    feedback: "Seções reprovadas, claims sem prova e desvios do brief, por critério."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Draft vetado antes da edição; só retorna depois de corrigido o item bloqueante."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-EDIT
+  name: edit_integrity
+  stage: editing
+  gated_artifact: edit-report
+  producer: copy-editor
+  executor: copy-chief
+  self_check_by: copy-editor
+  checklist: checklists/edit-quality-checklist.md
+  related_tasks: [edit-draft, edit-for-concision]
+  criteria:
+    - {id: EDT-1, check: "preserved_claims = true: nenhum claim, número, preço ou fonte alterado sem escalonamento", weight: 4, blocking: true}
+    - {id: EDT-2, check: "Nenhuma promessa, dado ou depoimento novo adicionado", weight: 3, blocking: true}
+    - {id: EDT-3, check: "Cada mudança relevante com type, before, after e reason", weight: 2, blocking: false}
+    - {id: EDT-4, check: "Em concisão, reduction_pct entre 20% e 40% (CONCISION_CUT_RANGE) ou justificativa registrada", weight: 2, blocking: false}
+    - {id: EDT-5, check: "quality_score >= 80 (EDIT_QUALITY_MIN) e word_count_before/after coerentes", weight: 2, blocking: false}
+    - {id: EDT-6, check: "Problemas que exigem pesquisa ou decisão de negócio escalados em escalations, não resolvidos por suposição", weight: 2, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - claim_changed_without_escalation
+    - new_promise_added
+    - strategy_altered_by_editor
+  on_review:
+    action: rework_to_producer
+    target: copy-editor
+    max_cycles: 2
+    feedback: "Mudanças que alteram fato ou estratégia e cortes fora da faixa."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Edição vetada: restaurar o draft original e refazer a edição preservando claims."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-BRAND
+  name: brand_voice_alignment
+  stage: editing
+  gated_artifact: "texto editado (edit-report.edited_sections)"
+  producer: copy-editor
+  executor: brand-voice-guardian
+  self_check_by: copy-editor
+  checklist: checklists/brand-voice-review-checklist.md
+  related_tasks: [review-brand-voice]
+  excluded_tasks:
+    define-brand-voice: "Não passa por QG-BRAND (o brand-voice-guardian seria produtor e executor, AP05). O guia é validado pelo humano em G1 na primeira vez (ADR-001, D7)."
+  criteria:
+    - {id: BVR-1, check: "brand_alignment_score >= 80 (BRAND_ALIGNMENT_MIN)", weight: 4, blocking: true}
+    - {id: BVR-2, check: "Nenhum item de vocabulary.forbidden presente", weight: 3, blocking: true}
+    - {id: BVR-3, check: "Tom coerente com tone_by_context do canal e formalidade do guia", weight: 2, blocking: false}
+    - {id: BVR-4, check: "Zero issues críticos abertos; issues médios com revisão sugerida mínima", weight: 3, blocking: true}
+    - {id: BVR-5, check: "Revisão não altera fatos, preços, promessas ou claims", weight: 3, blocking: true}
+    - {id: BVR-6, check: "Guia de voz do negócio existe e é a versão vigente (aprovada em G1)", weight: 2, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - critical_brand_issue_open
+    - forbidden_vocabulary_present
+    - brand_guide_missing_or_unapproved
+  on_review:
+    action: rework_to_producer
+    target: copy-editor
+    max_cycles: 2
+    feedback: "Issues por severidade com trecho, problema e revisão mínima sugerida."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Voz fora da marca ou guia ausente: acionar define-brand-voice antes de continuar."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-COMPLIANCE
+  name: claims_and_compliance
+  stage: conformity
+  gated_artifact: "texto revisado (copy + edit-report + brand-review)"
+  producer: "copywriter de produção + copy-editor"
+  executor: compliance-checker
+  self_check_by: "copywriter dono do draft | copy-editor"   # produtores; não aprovam o gate
+  checklist: checklists/compliance-checklist.md
+  related_tasks: [check-compliance, fact-check-claims]
+  modes:
+    full: "Risco medium ou high: extração e classificação completas de claims, política da plataforma e flags legais."
+    light: "wf-fast-variation (uso interno, risco low): reclassificação independente de claims sensíveis e promessas absolutas pelo compliance-checker (D6). Achou claim sensível: o risco sobe e a peça sai da pista rápida."
+  criteria:
+    - {id: CPL-1, check: "Todo claim extraído e classificado por claim_type", weight: 3, blocking: true}
+    - {id: CPL-2, check: "Todo claim com status verified, ou unverified/risky com required_action", weight: 3, blocking: true}
+    - {id: CPL-3, check: "Claims de price, guarantee, result, authority, testimonial, comparison, health, financial encaminhados ao G3", weight: 4, blocking: true}
+    - {id: CPL-4, check: "Depoimentos e dados de cliente com usage_rights granted e base LGPD", weight: 3, blocking: true}
+    - {id: CPL-5, check: "Política da plataforma do canal verificada (platform_policy_flags)", weight: 2, blocking: false}
+    - {id: CPL-6, check: "Relatório separa fatos [FONTE], recomendações e hipóteses (epistemic)", weight: 2, blocking: false}
+    - {id: CPL-7, check: "requires_legal_review marcado quando houver risco jurídico", weight: 2, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - false_claim_detected
+    - testimonial_without_usage_rights
+    - personal_data_without_legal_basis
+    - guarantee_or_result_without_source
+    - critical_legal_flag_open
+  on_review:
+    action: rework_via_copy_chief
+    target: copy-chief
+    max_cycles: 2
+    feedback: "Claims com required_action; o compliance-checker não reescreve, o copy-chief roteia a correção ao produtor."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: approval-owner
+    message: "Risco crítico: overall_risk = blocked; nada segue sem decisão humana (G3) e correção."
+  human_gate: G3            # G3 de texto (D10): claim novo na copy final, após o compliance; sempre que houver claim sensível
+
+# ----------------------------------------------------------------------------
+- id: QG-LOCALIZATION
+  name: localization_fidelity
+  stage: conformity
+  gated_artifact: localization
+  producer: localization-specialist
+  executor: compliance-checker
+  self_check_by: localization-specialist
+  checklist: checklists/localization-checklist.md
+  related_tasks: [localize-copy]
+  criteria:
+    - {id: LOC-1, check: "Claims, números, preços e prazos equivalentes ao original (mesma moeda ou conversão registrada)", weight: 4, blocking: true}
+    - {id: LOC-2, check: "Transcreação preserva intenção persuasiva e CTA", weight: 2, blocking: false}
+    - {id: LOC-3, check: "adaptation_notes com original, adaptado e motivo", weight: 2, blocking: false}
+    - {id: LOC-4, check: "cultural_flags e untranslatable_terms registrados", weight: 1, blocking: false}
+    - {id: LOC-5, check: "Regras legais e de plataforma do mercado-alvo consideradas; requires_compliance_recheck coerente", weight: 3, blocking: true}
+    - {id: LOC-6, check: "Voz da marca preservada no target_locale", weight: 2, blocking: false}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - claim_altered_in_translation
+    - price_or_currency_inconsistent
+    - legal_regime_of_target_market_ignored
+  on_review:
+    action: rework_to_producer
+    target: localization-specialist
+    max_cycles: 2
+    feedback: "Trechos em que o sentido, o número ou o claim divergem do original."
+  on_veto:
+    action: block_phase_transition
+    escalate_to: copy-chief
+    message: "Localização vetada: refazer a partir do original aprovado."
+  human_gate: null
+
+# ----------------------------------------------------------------------------
+- id: QG-PUBLISH-PREFLIGHT
+  name: publish_preflight
+  stage: approval_and_publication
+  gated_artifact: "approval-decision aprovada e execução (publish-receipt); gate pós-decisão (E4): roda depois do G4 e antes da execução, nunca como pré-requisito do G4"
+  producer: copy-publisher
+  executor: copy-chief
+  self_check_by: copy-publisher
+  deterministic_check_by: "copy-publisher, rodando python squads/copy-squad/scripts/approval_tools.py verify --for-execution --request R --decision D --payload <conteúdo a executar>; o copy-chief reexecuta sem flags de teste e contra-assina o resultado (counter_signed_by copy-chief; D8, D21, E1, E4). A execução é de PUBLISH_EXECUTORS = [human, main_session]"
+  checklist: checklists/publish-preflight-checklist.md
+  supporting_checklists:
+    - checklists/approval-gate-checklist.md
+  related_tasks: [prepare-approval-package, publish-approved-asset, manage-versions]
+  criteria:
+    - {id: PUB-1, check: "approval-decision = approved (nunca approved_with_edits, D2), com human_attested = true, recorded_via válido e reviewer em human_gates.approvers (D4)", weight: 4, blocking: true}
+    - {id: PUB-2, check: "payload_sha256 recalculado por approval_tools.py hash (D1) igual ao do pedido e ao da decisão (sha_match = true); approval-decision.bound_to == {gate, operation, destination, channel} do pedido e iguais ao que será executado (bound_match = true); request.gate == G4 e risk_level != low (E1)", weight: 4, blocking: true}
+    - {id: PUB-3, check: "decided_at <= now < approval-decision.expires_at, com expires_at == decided_at + 72h (not_expired = true, D3, E2)", weight: 3, blocking: true}
+    - {id: PUB-4, check: "edit-report, brand-review e compliance-review anexados e aprovados na versão exata do payload (no modo mvp o brand-voice-guardian está ativo, E6, então brand-review continua exigido)", weight: 3, blocking: true}
+    - {id: PUB-5, check: "idempotency_key única; nenhuma execução prévia do mesmo payload", weight: 2, blocking: true}
+    - {id: PUB-6, check: "rollback_plan definido e destino correto para o canal", weight: 2, blocking: true}
+    - {id: PUB-7, check: "Nenhuma ação em ambiente externo antes do preflight completo", weight: 3, blocking: true}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - sha_mismatch
+    - bound_to_mismatch
+    - approval_decision_expired
+    - approval_missing_or_rejected
+    - approved_with_edits_used_as_authorization
+    - human_attestation_invalid
+    - destination_channel_or_operation_mismatch
+    - external_execution_by_subagent
+    - payload_changed_after_approval
+    - duplicate_idempotency_key
+    - open_compliance_block
+  on_review:
+    action: rework_to_producer
+    target: copy-publisher
+    max_cycles: 2
+    feedback: "Itens do pacote faltantes (anexos, rollback, destino)."
+  on_veto:
+    action: block_execution
+    escalate_to: copy-chief
+    reopen_approval: true
+    message: "Execução bloqueada: abrir novo approval-request se payload ou prazo mudou."
+  human_gate: G4
+  note: "Todos os critérios PUB-* são blocking: qualquer falha ativa veto_condition, então o limiar numérico nunca compensa falha de aprovação, sha256 ou TTL."
+
+# ----------------------------------------------------------------------------
+- id: QG-LEARNING
+  name: learning_record_quality
+  stage: learning
+  gated_artifact: learning-record
+  producer: knowledge-curator
+  executor: cro-analyst
+  self_check_by: knowledge-curator
+  checklist: checklists/knowledge-entry-checklist.md
+  supporting_checklists:
+    - checklists/cro-test-checklist.md
+  related_tasks: [register-learning, correct-agent-failure]
+  criteria:
+    - {id: LRN-1, check: "hypothesis, variation, metric, result, decision e next_action preenchidos", weight: 3, blocking: true}
+    - {id: LRN-2, check: "Resultado com amostra e critério de decisão; sem causalidade sem isolamento de variável", weight: 3, blocking: true}
+    - {id: LRN-3, check: "learning_status coerente: approved só com significância definida ou correção humana (G5)", weight: 3, blocking: true}
+    - {id: LRN-4, check: "applies_to (oferta, público, canal, formato) delimita onde o aprendizado vale", weight: 2, blocking: false}
+    - {id: LRN-5, check: "Correção humana traz reference_example com before, after e reason", weight: 2, blocking: false}
+    - {id: LRN-6, check: "Isolamento por negócio: nenhum dado de outro {business}", weight: 3, blocking: true}
+    - {id: LRN-7, check: "review_after definido (LEARNING_REVIEW_DAYS)", weight: 1, blocking: false}
+  approve_score: 0.80
+  review_score: 0.60
+  veto_score: 0.60
+  veto_conditions:
+    - winner_declared_without_significance
+    - cross_business_data
+    - correction_without_reference_example
+  on_review:
+    action: rework_to_producer
+    target: knowledge-curator
+    max_cycles: 2
+    feedback: "Campos faltantes e conclusões não sustentadas pelos dados."
+  on_veto:
+    action: block_registration
+    escalate_to: copy-chief
+    message: "Aprendizado não entra na biblioteca; permanece como draft até validação."
+  human_gate: G5            # quando origin = human_correction; G5 não usa approval-request (D5): é correct-agent-failure → learning-record
+
+# ============================================================================
+# Roteamento de gates por workflow (referência rápida para o copy-chief)
+# ============================================================================
+gate_sequence_by_workflow:
+  wf-copy-production: [QG-INTAKE, QG-RESEARCH, QG-BRIEF, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-LOCALIZATION, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT, QG-LEARNING]
+  wf-campaign-launch: [QG-INTAKE, QG-RESEARCH, QG-BRIEF, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-LOCALIZATION, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT, QG-LEARNING]
+  wf-fast-variation: [QG-INTAKE, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE]
+  wf-performance-loop: [QG-INTAKE, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT, QG-LEARNING]
+  wf-content-repurposing: [QG-INTAKE, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT, QG-LEARNING]
+  note: "Fonte canônica do conjunto de gates de cada workflow (o validador compara o conjunto de gate_id de cada workflow com esta lista). QG-LOCALIZATION só roda quando existe target_locale no plano; wf-content-repurposing não contém fase de localização (peça com target_locale vai para wf-copy-production). QG-RESEARCH e QG-ANGLES rodam nos workflows completos (mínimo de 20 ângulos); em wf-performance-loop e wf-content-repurposing eles são herdados somente se o brief e os ângulos originais estiverem aprovados, vigentes e inalterados, senão reabrem (D11, D12)."
+
+# ----------------------------------------------------------------------------
+# Dispensas por modo (E6). Só o modo mvp dispensa gates; as demais regras valem integralmente.
+# ----------------------------------------------------------------------------
+mvp_waivers:
+  mode: mvp
+  note: "O mvp inclui o brand-voice-guardian (o preflight exige brand-review), então QG-BRAND e PUB-4 continuam valendo sem dispensa. Só o QG-LEARNING é dispensado, porque o knowledge-curator não está no mvp."
+  waived_gates:
+    - id: QG-LEARNING
+      reason: "knowledge-curator (produtor) fora do mvp; sem produtor não há learning-record a validar"
+      replacement: "o aprendizado fica em performance-analysis.next_actions até o knowledge-curator ser ativado"
+      registered_in: "execution-plan.gate_gaps (copy-chief registra a dispensa)"
+  never_waived: [QG-INTAKE, QG-BRIEF, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT]
+  human_gates_unchanged: "G1 a G4 seguem o risco; o mvp nunca dispensa gate humano nem a contra-assinatura do preflight."
+
+# Mapa gate humano → quality gates que o antecedem
+human_gate_prerequisites:
+  G1: [QG-BRIEF]                      # medium|high (D11); G3 de oferta no mesmo pacote quando high ou claim sensível (D10)
+  G2: [QG-ANGLES]                     # high ou campanha multi-ativo (D11)
+  G3: [QG-COMPLIANCE]                 # G3 de texto: após o compliance e antes de G4 (D10); o G3 de oferta antecede a produção e tem QG-BRIEF como pré-requisito
+  G4: [QG-COMPLIANCE, QG-BRAND, QG-EDIT]   # toda ação externa (D6, D11); QG-PUBLISH-PREFLIGHT é pós-decisão (E4), não pré-requisito do G4
+  G5: [QG-LEARNING]                   # sem approval-request (D5)

@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "bvr-lp-mentoria-v2",
+    "artifact_type": "brand-review",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "brand-voice-guardian",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.81,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "text_id": "cvc-lp-mentoria-v2",
+  "brand_guide_id": "bvg-exemplo-negocio-v1",
+  "brand_alignment_score": 78,
+  "tone_match": "Parcial: tom direto e acolhedor no hero; seção de oferta ficou mais formal que o guia define.",
+  "issues": [
+    {
+      "severity": "medium",
+      "excerpt": "Valor e condições: [pendente de aprovação do responsável pela oferta].",
+      "problem": "Linguagem burocrática, fora do tom informal definido no guia.",
+      "suggested_revision": "Os valores e as condições aparecem na conversa de diagnóstico.",
+      "reason": "O guia pede frases curtas e conversacionais."
+    },
+    {
+      "severity": "low",
+      "excerpt": "costuma gerar surpresas desagradáveis",
+      "problem": "Adjetivação redundante.",
+      "suggested_revision": "gera surpresas",
+      "reason": "Estilo enxuto previsto no guia."
+    }
+  ],
+  "approved_for_next_stage": true
+}

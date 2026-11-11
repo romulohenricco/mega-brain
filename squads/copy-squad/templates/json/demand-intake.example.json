@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "dmd-fluxo-caixa-001-exemplo",
+    "artifact_type": "demand-intake",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "copy-chief",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_input",
+    "confidence": 0.7,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo de esqueleto; substitua pelos valores reais."
+    ]
+  },
+  "raw_request": "Preciso de uma página de vendas e uma sequência de e-mails para lançar uma mentoria de gestão financeira para pequenas empresas.",
+  "requester": "Responsável de marketing (exemplo ilustrativo)",
+  "objective": "Gerar inscrições qualificadas para a primeira turma da mentoria",
+  "demand_type": "conversion",
+  "channels": [
+    "landing_page"
+  ],
+  "audience_hint": "Donos de pequenas empresas que controlam o caixa em planilhas",
+  "offer_hint": "Mentoria em grupo de 8 semanas sobre fluxo de caixa",
+  "deadline": "2026-12-05",
+  "constraints": [
+    "Não prometer resultado financeiro específico"
+  ],
+  "prior_data": [
+    "Lista de 1.200 contatos (exemplo ilustrativo)"
+  ],
+  "missing_information": [
+    "Preço da mentoria"
+  ],
+  "questions": [
+    "Qual é o preço e a forma de pagamento?"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "cpl-exemplo-v1",
+    "artifact_type": "compliance-review",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "compliance-checker",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "copy_id": "cvc-exemplo-v1",
+  "overall_risk": "low",
+  "claims": [
+    {
+      "claim": "Claim de exemplo",
+      "claim_type": "other",
+      "status": "verified",
+      "source": "fonte",
+      "required_action": "Nenhuma"
+    }
+  ],
+  "legal_flags": [],
+  "platform_policy_flags": [],
+  "lgpd_flags": [],
+  "epistemic": {
+    "facts": [],
+    "recommendations": [],
+    "hypotheses": []
+  },
+  "approved": true,
+  "blocking_reasons": [],
+  "requires_legal_review": false
+}

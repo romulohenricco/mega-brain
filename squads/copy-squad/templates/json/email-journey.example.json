@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "eml-exemplo-v1",
+    "artifact_type": "email-journey",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "email-crm-copywriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "objective": "Objetivo de exemplo",
+  "audience_segment": "Segmento de exemplo",
+  "consent_basis": "Opt-in registrado (LGPD)",
+  "emails": [
+    {
+      "email_id": "eml-01",
+      "trigger": "evento",
+      "delay": "imediato",
+      "subject": "Assunto de exemplo",
+      "preview_text": "Prévia",
+      "body": "Corpo de exemplo",
+      "cta": "CTA",
+      "success_metric": "taxa de clique",
+      "segment_variations": [],
+      "requires_approval": true
+    }
+  ],
+  "exit_conditions": [
+    "Converteu"
+  ],
+  "fallback_for_non_openers": "Reenvio único com novo assunto"
+}

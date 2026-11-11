@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "apr-exemplo",
+    "artifact_type": "approval-request",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-publisher",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "asset_id": "cvc-anuncio",
+  "gate": "G4",
+  "operation": "run_ads",
+  "destination": "anúncio pago, conjunto de teste A",
+  "channel": "paid_ads",
+  "payload": {
+    "format": "ad",
+    "headline": "Fluxo de caixa sem planilha confusa",
+    "cta": "Saiba mais",
+    "draft_id": "cvc-anuncio-v1"
+  },
+  "payload_sha256": "9efe6e6c0e35da6bbe1ab614a0a649c7a035ae3055680dd9f547804a101299f1",
+  "risk_level": "high",
+  "policy_applied": "risk-policy: anúncio pago é risco alto; exige compliance-checker e G4 (exemplo ilustrativo)",
+  "reviews": {
+    "edit_report_id": "edt-anuncio-v1"
+  },
+  "requested_by": "copy-publisher",
+  "approver_role": "approval-owner",
+  "expires_at": "2026-11-13T14:30:00-03:00",
+  "idempotency_key": "camp-fluxo-caixa-lancamento:cvc-anuncio:g4:r1:9efe6e6c0e35",
+  "audit_trail": [
+    {
+      "at": "2026-11-10T14:00:00-03:00",
+      "actor": "compliance-checker",
+      "action": "compliance-review concluída com garantia pendente de confirmação"
+    },
+    {
+      "at": "2026-11-10T14:30:00-03:00",
+      "actor": "copy-publisher",
+      "action": "pacote de aprovação montado e payload_sha256 calculado"
+    }
+  ]
+}

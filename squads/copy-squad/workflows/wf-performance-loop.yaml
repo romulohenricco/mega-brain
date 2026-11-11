@@ -1,0 +1,753 @@
+# wf-performance-loop — dados, hipóteses, testes e aprendizado
+metadata:
+  id: wf-performance-loop
+  name: 'Ciclo de performance: dados, hipóteses, teste e aprendizado'
+  version: 1.0.0
+  atomic_layer: Organism
+  squad: copy-squad
+  owner: copy-chief
+  description: Loop contínuo de dados, hipóteses, teste, variações, aprovação, publicação, análise e aprendizado.
+  persistence_root: .data/copy-squad/{business}/{campaign_id}/
+best_for:
+- existem dados reais de campanha ou ativo publicado
+- time quer evoluir CTA, headline ou oferta com testes
+- fechar o ciclo de aprendizado da biblioteca
+approval_inheritance:
+  rule: >-
+    Este fluxo deriva variações de ativo já publicado (mesmo campaign_id e asset_id) e herda o risk_level do ativo-fonte, nunca menor.
+    G1, G2, QG-BRIEF, QG-ANGLES e QG-RESEARCH são dispensados somente se o brief e os ângulos originais estão aprovados (G1 e G2 com decisão approved), vigentes e inalterados (ADR-001 D12).
+    Se o brief ou o ângulo mudou, ou a aprovação original não está vigente, o copy-chief reabre G1 e G2 (wf-copy-production a partir do brief) antes de seguir.
+    G3 e G4 nunca são herdados: seguem sempre o risco da peça nova (anúncio pago e alteração de página são risco high; toda ação externa é no mínimo medium).
+  always_required: [G4, QG-PUBLISH-PREFLIGHT]
+  entry_checkpoint: state created confere brief, ângulos e aprovações originais; se algo falhar, a transição inheritance_invalid leva a wf-copy-production (ADR-001 E5)
+  conditional: G3 apenas com claim sensível novo ou alterado (G3 de texto após o compliance, ADR-001 D10)
+when_not_to_use:
+- 'sem dados reais: usar wf-copy-production primeiro'
+- criação de ativo novo
+- 'sem acesso às métricas reais: nenhum resultado é presumido'
+inputs:
+  required:
+  - name: performance_data
+    type: file
+    note: métricas reais fornecidas
+  - name: business
+    type: slug
+  optional:
+  - name: campaign_id
+    type: string
+  - name: baseline
+    type: object
+state_machine:
+  initial: created
+  states:
+  - created
+  - phase-1_intake-plan
+  - phase-2_analysis
+  - phase-3_hypotheses
+  - phase-4_variations
+  - phase-5_review
+  - phase-6_approval
+  - phase-7_publication
+  - phase-8_result-analysis
+  - phase-9_learning
+  - awaiting_human_gate
+  - escalated_to_copy_chief
+  - failure_correction
+  - completed
+  - vetoed
+  - cancelled
+  - handoff_to_wf-copy-production
+  terminal_states:
+  - completed
+  - vetoed
+  - cancelled
+  - handoff_to_wf-copy-production
+  transitions:
+  - from: created
+    to: phase-1_intake-plan
+    'on': plan_approved
+    guard: (demand_intake.missing_information == [] or questions_answered == true) and approved_source.brief_status == approved and approved_source.angles_status == approved and approved_source.brief_unchanged == true and approved_source.angles_unchanged == true and approved_source.approvals_current == true; checkpoint de entrada da herança (ADR-001 D12 e E5)
+  - from: created
+    to: handoff_to_wf-copy-production
+    'on': inheritance_invalid
+    guard: not (approved_source.brief_status == approved and approved_source.angles_status == approved and approved_source.brief_unchanged == true and approved_source.angles_unchanged == true and approved_source.approvals_current == true); brief ou ângulo original não aprovado, vigente e inalterado reabre G1 e G2 em wf-copy-production a partir do brief (ADR-001 D12 e E5)
+  - from: phase-1_intake-plan
+    to: phase-2_analysis
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-1_intake-plan
+    to: phase-1_intake-plan
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-1_intake-plan
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-1_intake-plan
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-2_analysis
+    to: phase-3_hypotheses
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-2_analysis
+    to: phase-2_analysis
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-2_analysis
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-2_analysis
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-3_hypotheses
+    to: phase-4_variations
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-3_hypotheses
+    to: phase-3_hypotheses
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-3_hypotheses
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-3_hypotheses
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-4_variations
+    to: phase-5_review
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-4_variations
+    to: phase-4_variations
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-4_variations
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-4_variations
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-5_review
+    to: phase-6_approval
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and (human_gate.G3.required == false or (approval_decision.decision == approved and gate == G3))
+  - from: phase-5_review
+    to: phase-5_review
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-5_review
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-5_review
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-5_review
+    to: awaiting_human_gate
+    'on': g3_requested
+    guard: human_gate.G3.required == true
+  - from: awaiting_human_gate
+    to: phase-5_review
+    'on': g3_rejected
+    guard: approval_decision.decision == rejected and gate == G3
+  - from: awaiting_human_gate
+    to: phase-6_approval
+    'on': g3_approved
+    guard: approval_decision.decision == approved and gate == G3
+  - from: awaiting_human_gate
+    to: phase-4_variations
+    'on': g3_approved_with_edits
+    guard: approval_decision.decision == approved_with_edits and gate == G3; exige nova versão e novo payload_sha256, a decisão sobre o hash anterior não autoriza execução
+  - from: phase-6_approval
+    to: phase-7_publication
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and approval_decision.decision == approved and gate == G4 and bound_match and approval_decision.payload_sha256 == recalculated_payload_sha256
+  - from: phase-6_approval
+    to: phase-6_approval
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-6_approval
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-6_approval
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-6_approval
+    to: awaiting_human_gate
+    'on': g4_requested
+    guard: operation in [publish, send, run_ads, update_page]
+  - from: awaiting_human_gate
+    to: phase-6_approval
+    'on': g4_rejected
+    guard: approval_decision.decision == rejected and gate == G4
+  - from: awaiting_human_gate
+    to: phase-7_publication
+    'on': g4_approved
+    guard: approval_decision.decision == approved and gate == G4 and bound_match and approval_decision.payload_sha256 == recalculated_payload_sha256 and verify_ok
+  - from: awaiting_human_gate
+    to: phase-6_approval
+    'on': g4_approved_with_edits
+    guard: approval_decision.decision == approved_with_edits and gate == G4; exige nova versão e novo payload_sha256, a decisão sobre o hash anterior não autoriza execução
+  - from: phase-7_publication
+    to: phase-8_result-analysis
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and preflight.copy_publisher_verify_ok == true and preflight.copy_chief_countersigned == true
+  - from: phase-7_publication
+    to: phase-7_publication
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-7_publication
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-7_publication
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-8_result-analysis
+    to: phase-9_learning
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80
+  - from: phase-8_result-analysis
+    to: phase-8_result-analysis
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-8_result-analysis
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-8_result-analysis
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: phase-9_learning
+    to: completed
+    'on': phase_complete
+    guard: checkpoint.criteria_met == true and quality_gate.score >= 0.80 and g5_pending == false); G5 não usa approval-request, é correct-agent-failure que gera o learning-record (ADR-001 D5)
+  - from: phase-9_learning
+    to: phase-9_learning
+    'on': quality_review
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count < 2
+  - from: phase-9_learning
+    to: vetoed
+    'on': quality_veto
+    guard: quality_gate.score < 0.60 or veto_condition == true
+  - from: phase-9_learning
+    to: escalated_to_copy_chief
+    'on': rework_exhausted
+    guard: 0.60 <= quality_gate.score < 0.80 and rework_count >= 2; escalar ao copy-chief e depois ao approval-owner, nunca forçar aprovação
+  - from: awaiting_human_gate
+    to: awaiting_human_gate
+    'on': approval_response_overdue
+    guard: gate in [G3, G4] and now > approval_request.expires_at; silêncio nunca é aprovação, o pedido permanece pendente (sem veto automático) e o copy-chief reenvia ou escala (SLA_HUMAN_GATE_HOURS = 24; ADR-001 D3)
+  - from: phase-7_publication
+    to: phase-6_approval
+    'on': approval_decision_expired
+    guard: now >= approval_decision.expires_at (decided_at + APPROVAL_TTL_HOURS = 72) antes da execução; VETO em QG-PUBLISH-PREFLIGHT e nova rodada g4-r{n+1} com novo approval-request
+  - from: escalated_to_copy_chief
+    to: phase-1_intake-plan
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-1_intake-plan
+  - from: escalated_to_copy_chief
+    to: phase-2_analysis
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-2_analysis
+  - from: escalated_to_copy_chief
+    to: phase-3_hypotheses
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-3_hypotheses
+  - from: escalated_to_copy_chief
+    to: phase-4_variations
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-4_variations
+  - from: escalated_to_copy_chief
+    to: phase-5_review
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-5_review
+  - from: escalated_to_copy_chief
+    to: phase-6_approval
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-6_approval
+  - from: escalated_to_copy_chief
+    to: phase-7_publication
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-7_publication
+  - from: escalated_to_copy_chief
+    to: phase-8_result-analysis
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-8_result-analysis
+  - from: escalated_to_copy_chief
+    to: phase-9_learning
+    'on': escalation_rework_authorized
+    guard: copy_chief_or_approval_owner.decision == authorize_rework and escalated_from == phase-9_learning
+  - from: escalated_to_copy_chief
+    to: vetoed
+    'on': escalation_denied
+    guard: copy_chief_or_approval_owner.decision == stop
+  - from: '*'
+    to: failure_correction
+    'on': agent_failure
+    guard: agent_run.status in [failed, escalated, blocked] and human_corrected == true
+  - from: failure_correction
+    to: phase-9_learning
+    'on': g5_learning_registered
+    guard: learning_record.learning_status in [approved, draft]; segue para a fase de aprendizado (register-learning)
+  - from: failure_correction
+    to: escalated_to_copy_chief
+    'on': failure_unrecoverable
+    guard: human_corrected == false and rework_count >= 2; falha irrecuperável escala ao copy-chief e depois ao approval-owner, nunca vai direto a vetoed (ADR-001 E5)
+  - from: '*'
+    to: cancelled
+    'on': cancel
+    guard: requester or copy-chief cancels; nothing external was executed
+phases:
+- id: PHASE-1
+  slug: intake-plan
+  name: Intake dos dados e plano do ciclo
+  description: 'Entrada: números reais fornecidos pelo humano ou pelo conector autorizado. O squad nunca inventa métricas.'
+  agents:
+  - copy-chief
+  parallel: false
+  tasks:
+  - task: tasks/intake-demand.md
+    agent: copy-chief
+    required: true
+    output: demand-intake
+  - task: tasks/plan-execution.md
+    agent: copy-chief
+    required: true
+    output: execution-plan
+  checkpoint:
+    criteria:
+    - dados de performance recebidos com período, canal e ativos
+    - métrica principal e baseline informados
+    - execution-plan com workflow_id = wf-performance-loop
+    human_review: false
+    gate: null
+    message: Ciclo de performance planejado.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/00-intake/
+- id: PHASE-2
+  slug: analysis
+  name: Análise dos dados
+  description: null
+  agents:
+  - cro-analyst
+  parallel: false
+  tasks:
+  - task: tasks/analyze-performance.md
+    agent: cro-analyst
+    required: true
+    output: performance-analysis
+  checkpoint:
+    criteria:
+    - sample_size declarado
+    - vencedor só declarado com critério de significância
+    - findings com evidência
+    - separação em fatos, recomendações e hipóteses
+    human_review: false
+    gate: null
+    message: Análise emitida. Amostra pequena resulta em winner_declared == false.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/08-performance/
+- id: PHASE-3
+  slug: hypotheses
+  name: Hipóteses e desenho do teste
+  description: null
+  agents:
+  - cro-analyst
+  parallel: false
+  tasks:
+  - task: tasks/build-cro-hypotheses.md
+    agent: cro-analyst
+    required: true
+    output: performance-analysis
+  - task: tasks/design-ab-test.md
+    agent: cro-analyst
+    required: true
+    output: performance-analysis
+  checkpoint:
+    criteria:
+    - hipóteses com variável, efeito esperado e priorização ICE
+    - uma variável por teste
+    - tamanho de amostra e critério de parada definidos
+    - critério de decisão pré-registrado antes do teste (AB_CONFIDENCE_LEVEL = 0.95 e AB_MIN_SAMPLE_PER_VARIANT); critério diferente só se registrado no design-ab-test
+    - 'verificação do desenho do teste com checklists/cro-test-checklist.md (verificação própria do cro-analyst, sem rótulo de quality gate)'
+    human_review: false
+    gate: null
+    message: Hipóteses priorizadas e teste desenhado.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/08-performance/
+- id: PHASE-4
+  slug: variations
+  name: Variações para o teste
+  description: null
+  agents:
+  - conversion-copywriter
+  parallel: true
+  tasks:
+  - task: tasks/write-ad-variations.md
+    agent: conversion-copywriter
+    required: false
+    output: conversion-copy
+    when: hipótese sobre anúncio
+  - task: tasks/optimize-ctas.md
+    agent: conversion-copywriter
+    required: false
+    output: conversion-copy
+    when: hipótese sobre CTA
+  checkpoint:
+    criteria:
+    - uma variação por hipótese, mudando só a variável testada
+    - controle preservado
+    - claims inalterados salvo aprovação
+    human_review: false
+    gate: null
+    message: Variações v1 prontas.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/
+- id: PHASE-5
+  slug: review
+  name: Edição, voz e compliance
+  description: null
+  agents:
+  - copy-editor
+  - brand-voice-guardian
+  - compliance-checker
+  - copy-publisher
+  - approval-owner
+  parallel: false
+  tasks:
+  - task: tasks/edit-draft.md
+    agent: copy-editor
+    required: true
+    output: edit-report
+  - task: tasks/review-brand-voice.md
+    agent: brand-voice-guardian
+    required: true
+    output: brand-review
+  - task: tasks/check-compliance.md
+    agent: compliance-checker
+    required: true
+    output: compliance-review
+    gate: G3
+  - task: tasks/prepare-approval-package.md
+    agent: copy-publisher
+    required: false
+    output: approval-request
+    condition: claim sensível presente (nova promessa, preço, garantia ou resultado na variação)
+    gate: G3
+    note: único produtor de approval-request (ADR-001 D5); pasta 06-approval/{asset_id}/g3-r{n}/
+  - task: tasks/approve-gate.md
+    agent: approval-owner
+    required: false
+    output: approval-decision
+    condition: claim sensível presente (nova promessa, preço, garantia ou resultado na variação)
+    gate: G3
+  checkpoint:
+    criteria:
+    - claims preservados
+    - voz alinhada
+    - compliance sem overall_risk blocked
+    - nova promessa ou preço aciona G3
+    - G3 registrada como approved quando houver claim sensível (approved_with_edits gera nova versão e nova rodada, não libera)
+    human_review: true
+    gate: G3
+    message: Variações revisadas.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/
+- id: PHASE-6
+  slug: approval
+  name: Aprovação do teste (G4)
+  description: null
+  agents:
+  - copy-publisher
+  - approval-owner
+  parallel: false
+  tasks:
+  - task: tasks/prepare-approval-package.md
+    agent: copy-publisher
+    required: true
+    output: approval-request
+    gate: G4
+  - task: tasks/approve-gate.md
+    agent: approval-owner
+    required: true
+    output: approval-decision
+    gate: G4
+  checkpoint:
+    criteria:
+    - approval-request com sha256 e validade de 72h
+    - G4 approved (approved_with_edits não autoriza execução e abre a rodada g4-r{n+1})
+    - hipótese e critério de parada visíveis ao aprovador
+    human_review: true
+    gate: G4
+    message: Teste aguardando aprovação.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/
+- id: PHASE-7
+  slug: publication
+  name: Publicação do teste
+  description: null
+  agents:
+  - copy-publisher
+  parallel: false
+  tasks:
+  - task: tasks/publish-approved-asset.md
+    agent: copy-publisher
+    required: true
+    output: publish-receipt
+    note: primeiro passo é o preflight em dois passos (ADR-001 D8), o copy-publisher roda scripts/approval_tools.py verify (verify --for-execution --request/--decision/--payload sobre a pasta da rodada 06-approval/{asset_id}/g4-r{n}/; o que se executa é o payload.json da rodada, igual a approval-request.payload, nunca o draft 04-drafts; ADR-001 E8) e o copy-chief contra-assina (QG-PUBLISH-PREFLIGHT); nenhum subagent executa ação externa, o copy-publisher emite o pacote de execução e registra o publish-receipt, e a execução é do humano ou da sessão principal depois da contra-assinatura (PUBLISH_EXECUTORS = [human, main_session]; ADR-001 E4)
+  checkpoint:
+    criteria:
+    - preflight do copy-publisher contra-assinado pelo copy-chief antes da execução
+    - sha_match, approval_valid e not_expired verdadeiros
+    - publish-receipt com rollback_plan
+    - teste só inicia depois da entrega registrada
+    human_review: false
+    gate: null
+    message: Teste no ar. Análise somente após a janela definida.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/07-published/{asset_id}/
+- id: PHASE-8
+  slug: result-analysis
+  name: Análise do resultado do teste
+  description: null
+  agents:
+  - cro-analyst
+  parallel: false
+  tasks:
+  - task: tasks/analyze-performance.md
+    agent: cro-analyst
+    required: true
+    output: performance-analysis
+    note: segunda passagem, ao final da janela
+  checkpoint:
+    criteria:
+    - significância avaliada pelo critério pré-registrado (AB_CONFIDENCE_LEVEL = 0.95 e AB_MIN_SAMPLE_PER_VARIANT); sem atingir os dois, winner_declared = false
+    - resultado inconclusivo declarado como tal
+    - vencedor sem significância proibido
+    human_review: false
+    gate: null
+    message: Resultado do teste analisado.
+  persisted_at: .data/copy-squad/{business}/{campaign_id}/08-performance/
+- id: PHASE-9
+  slug: learning
+  name: Aprendizado
+  description: null
+  agents:
+  - knowledge-curator
+  - approval-owner
+  parallel: false
+  tasks:
+  - task: tasks/correct-agent-failure.md
+    agent: approval-owner
+    required: false
+    output: learning-record
+    condition: humano corrigiu output
+    gate: G5
+    note: G5 não usa approval-request; a correção humana vira learning-record (ADR-001 D5)
+  - task: tasks/register-learning.md
+    agent: knowledge-curator
+    required: true
+    output: learning-record
+  checkpoint:
+    criteria:
+    - learning-record com hipótese, variação, métrica, resultado, decisão e próxima ação
+    - learning_status testing|approved|draft correto
+    - aprendizado inconclusivo também registrado
+    human_review: false
+    gate: G5
+    message: Aprendizado registrado e ciclo pode reiniciar com nova hipótese.
+  persisted_at: .data/copy-squad/{business}/_library/learnings/
+quality_gates:
+- gate_id: QG-INTAKE
+  after_phase: PHASE-1
+  checklist: checklists/intake-checklist.md
+  executor: brief-master
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-DRAFT
+  after_phase: PHASE-4
+  checklist: checklists/conversion-copy-checklist.md
+  executor: copy-chief
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-EDIT
+  after_phase: PHASE-5
+  checklist: checklists/edit-quality-checklist.md
+  executor: copy-chief
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-BRAND
+  after_phase: PHASE-5
+  checklist: checklists/brand-voice-review-checklist.md
+  executor: brand-voice-guardian
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-COMPLIANCE
+  after_phase: PHASE-5
+  checklist: checklists/compliance-checklist.md
+  executor: compliance-checker
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-PUBLISH-PREFLIGHT
+  after_phase: PHASE-7
+  timing: pós-decisão G4 e antes da execução externa (primeiro passo de publish-approved-asset); não é pré-requisito do G4 (ADR-001 E4)
+  produced_by: copy-publisher
+  checklist: checklists/publish-preflight-checklist.md
+  executor: copy-chief
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+- gate_id: QG-LEARNING
+  after_phase: PHASE-9
+  checklist: checklists/knowledge-entry-checklist.md
+  executor: cro-analyst
+  min_score: 0.8
+  review_range:
+  - 0.6
+  - 0.79
+  veto_below: 0.6
+  on_review: rework max 2 ciclos
+  on_veto: escalar copy-chief
+human_gates:
+- gate: G3
+  after_phase: PHASE-5
+  owner: approval-owner
+  task: tasks/approve-gate.md
+  required_when: nova promessa, preço, garantia, resultado, data_privacy ou urgência/escassez na variação (G3 de texto, após o compliance)
+  ttl_hours: 72
+  decision_contract: contracts/approval-decision.schema.json
+  note: Aprovação de claims.
+- gate: G4
+  after_phase: PHASE-6
+  owner: approval-owner
+  task: tasks/approve-gate.md
+  required_when: sempre (o teste altera ativo em produção)
+  ttl_hours: 72
+  decision_contract: contracts/approval-decision.schema.json
+  note: Aprova a variação antes de ir ao ar. Só approved com payload_sha256 igual libera a execução.
+- gate: G5
+  after_phase: PHASE-9
+  owner: approval-owner
+  task: tasks/correct-agent-failure.md
+  required_when: sempre que humano corrigir output
+  note: G5 não usa approval-request nem approval-decision. A correção humana passa por correct-agent-failure e vira learning-record.
+error_handling:
+  retry:
+    max_attempts: 2
+    backoff: imediato com contexto novo; sem repetir o mesmo prompt
+    applies_to: falha técnica de agente, schema inválido, envelope incompleto
+  rework_loop:
+    max_cycles: 2
+    on_exceeded: estado escalated_to_copy_chief (transição rework_exhausted) e depois approval-owner; nunca forçar aprovação
+    rule: o produtor corrige somente os itens apontados pelo validador; versão nova v{n+1}, a anterior é preservada
+  escalation:
+  - to: copy-chief
+    when: veto de quality gate, conflito entre validadores, contrato inválido após retry
+  - to: approval-owner
+    when: decisão estratégica, claim sem fonte, risco high não mitigado, rework esgotado
+  on_veto: interromper a fase, registrar handoff com status blocked, abrir correct-agent-failure quando o humano corrigir o output (G5) e registrar
+    o learning via register-learning
+  on_timeout: 'silêncio nunca é aprovação: o pedido (expires_at = criação + 72h) permanece em awaiting_human_gate, o copy-chief reenvia ou escala conforme o SLA de 24h; decisão vencida (72h após decided_at) gera VETO em QG-PUBLISH-PREFLIGHT e nova rodada com novo approval-request e nova idempotency_key; nada é publicado'
+  inconclusive_result: se a análise não atingir significância, registrar aprendizado inconclusivo e decidir com o approval-owner entre estender
+    o teste ou encerrar
+  failure_path:
+    steps:
+    - tasks/correct-agent-failure.md (G5)
+    - tasks/register-learning.md
+completion_signals:
+- performance-analysis com hipóteses e next_actions
+- variação aprovada em G4 e publicada com recibo
+- resultado do teste analisado com critério de significância
+- learning-record emitido
+- nenhum vencedor declarado sem evidência
+outputs:
+- artifact: performance-analysis
+  path: .data/copy-squad/{business}/{campaign_id}/08-performance/performance-analysis-{yyyymmdd}.json
+- artifact: variations
+  path: .data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json
+- artifact: approvals
+  path: .data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/
+- artifact: publish-receipt
+  path: .data/copy-squad/{business}/{campaign_id}/07-published/{asset_id}/publish-receipt.json
+- artifact: learning-record
+  path: .data/copy-squad/{business}/_library/learnings/{lrn-id}.json
+- artifact: handoffs
+  path: .data/copy-squad/{business}/{campaign_id}/handoffs.jsonl
+agents_by_phase:
+  PHASE-1:
+  - copy-chief
+  PHASE-2:
+  - cro-analyst
+  PHASE-3:
+  - cro-analyst
+  PHASE-4:
+  - conversion-copywriter
+  PHASE-5:
+  - approval-owner
+  - brand-voice-guardian
+  - compliance-checker
+  - copy-editor
+  - copy-publisher
+  PHASE-6:
+  - approval-owner
+  - copy-publisher
+  PHASE-7:
+  - copy-publisher
+  PHASE-8:
+  - cro-analyst
+  PHASE-9:
+  - approval-owner
+  - knowledge-curator
+quality_checklist:
+- Uma variável por teste
+- Nenhum vencedor sem significância
+- Métricas vêm de fonte real e citada
+- Variação testada passa por voz e compliance
+- Nada vai ao ar sem G4
+handoffs_to_other_workflows:
+- to_workflow: wf-copy-production
+  when: checkpoint de entrada falhou (brief ou ângulo original não aprovado, vigente e inalterado)
+  payload:
+  - brief
+  - angles
+  - demand-intake
+- to_workflow: wf-performance-loop
+  when: nova hipótese priorizada após o aprendizado
+  payload:
+  - learning-record

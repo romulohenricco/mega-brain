@@ -1,0 +1,270 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Matriz de senioridade do Copy Squad. Traduz a progressão de carreira de
+    copywriter (Júnior, Pleno, Sênior, Lead, Diretor) em competências gerais,
+    expectativas por papel do squad, nível-alvo por agente e no procedimento de
+    registro de seniority_level_observed nas avaliações.
+  created_at: "2026-11-10"
+  principle: >-
+    A progressão não é rígida, mas o mercado reconhece estes cinco níveis. No
+    squad, o nível mede o tipo de julgamento que o output demonstra, não o
+    volume produzido. Um agente de nível-alvo sênior que entrega output júnior
+    está abaixo do alvo, e isso é sinal para revisar prompt, contexto ou contrato.
+
+levels:
+  junior:
+    label: "Júnior / Trainee"
+    typical_responsibility: "Escreve variações, posts, e-mails simples, CTAs e peças sob supervisão; aprende tom de voz e processos."
+    mastery_signals: "Gramática, clareza, pesquisa básica e execução fiel de briefings."
+    value_in_squad: "Executa o que foi definido; precisa de revisão em tudo que for decisão."
+  pleno:
+    label: "Pleno"
+    typical_responsibility: "Cria campanhas e peças completas, adapta mensagens a canais e participa de revisões e testes."
+    mastery_signals: "Autonomia, entendimento de funil, SEO, dados e consistência de marca."
+    value_in_squad: "Entrega a peça completa sem reabrir o briefing; ainda depende de direção para escolher o argumento."
+  senior:
+    label: "Sênior"
+    typical_responsibility: "Lidera conceitos, orienta decisões estratégicas, trabalha com stakeholders e pode mentorar juniores."
+    mastery_signals: "Estratégia, posicionamento, narrativa, performance e gestão de complexidade."
+    value_in_squad: "Identifica o argumento que realmente diferencia a oferta, antecipa objeções sem prometer o que não pode ser entregue e lê métricas para propor próximos testes."
+  lead:
+    label: "Lead / Gerente de Copy"
+    typical_responsibility: "Gerencia time, padrões de qualidade, processos, calendários e alinhamento com objetivos de negócio."
+    mastery_signals: "Liderança, escala de produção e governança de mensagem."
+    value_in_squad: "Define padrões, resolve conflitos entre agentes, calibra rubricas e protege a voz e o processo."
+  director:
+    label: "Creative Director / Copy Director"
+    typical_responsibility: "Define visão criativa, aprova campanhas, constrói identidade verbal e conecta criatividade ao resultado do negócio."
+    mastery_signals: "Estratégia de marca, liderança criativa e impacto comercial."
+    value_in_squad: "Decide o que comunicar, para quem, com qual evidência e como medir; responde pelo risco da mensagem."
+
+# ============================================================================
+# Competências gerais por nível (o que qualquer output do squad demonstra)
+# ============================================================================
+general_competencies:
+  - competency: "Escrita e edição"
+    junior: "Texto correto e claro; segue modelo; precisa de edição para cortar o que não gera valor."
+    pleno: "Texto com ritmo e síntese; autoedita; adapta o registro ao canal."
+    senior: "Corta o supérfluo sem perder o argumento; hierarquia e transições deliberadas."
+    lead: "Estabelece padrão editorial e critérios de corte para o time."
+    director: "Define a identidade verbal e o que a marca nunca diria."
+  - competency: "Pesquisa"
+    junior: "Usa o que foi entregue; cita fonte quando solicitado."
+    pleno: "Busca complemento relevante; distingue fato de opinião."
+    senior: "Triangula fontes, separa fato, inferência e hipótese e declara lacunas."
+    lead: "Define o protocolo de evidência e quando pesquisar de novo."
+    director: "Decide que evidência sustenta uma promessa pública."
+  - competency: "Marketing e funil"
+    junior: "Entende o objetivo da peça."
+    pleno: "Relaciona a peça ao estágio de consciência e ao funil."
+    senior: "Desenha a mensagem por estágio e canal; conecta oferta, prova e objeção."
+    lead: "Orquestra peças e canais como um sistema."
+    director: "Liga posicionamento, oferta e crescimento do negócio."
+  - competency: "Psicologia aplicada (persuasão ética)"
+    junior: "Evita promessas absolutas; segue as regras do guia."
+    pleno: "Antecipa objeções comuns e usa prova real."
+    senior: "Usa motivação e objeção reais do público sem recorrer a gatilho falso; recusa escassez ou autoridade inventadas."
+    lead: "Audita o time quanto a práticas enganosas."
+    director: "Define os limites éticos da marca na persuasão."
+  - competency: "Dados e testes"
+    junior: "Reconhece que existem métricas."
+    pleno: "Propõe variações para teste e lê resultados simples."
+    senior: "Formula hipótese testável, isola variável e não declara vencedor sem critério."
+    lead: "Governa o programa de testes e a cadência de aprendizado."
+    director: "Decide em que apostar com base em evidência e apetite de risco."
+  - competency: "Uso de IA"
+    junior: "Usa saída de IA como veio."
+    pleno: "Revisa e corrige a saída de IA."
+    senior: "Orienta a IA, valida fontes e mantém julgamento humano onde há risco."
+    lead: "Define onde a IA pode operar sozinha e onde exige humano."
+    director: "Decide o modelo operacional de pessoas e agentes."
+  - competency: "Colaboração e handoff"
+    junior: "Entrega no formato pedido."
+    pleno: "Entrega com contexto e pendências claras."
+    senior: "Entrega contrato completo, com suposições, confiança e riscos explícitos."
+    lead: "Desfaz conflitos entre papéis e destrava dependências."
+    director: "Alinha visão criativa, comercial e jurídica."
+
+# ============================================================================
+# Nível-alvo por agente
+# ============================================================================
+targets:
+  default_for_production: senior
+  agents:
+    - {agent_id: copy-chief,               target: director, rationale: "Decide roteamento, risco e escalonamento; responde pela governança da mensagem e do processo."}
+    - {agent_id: brief-master,             target: senior,   rationale: "Converte demanda vaga em briefing sem ambiguidade; separar fato de hipótese exige julgamento."}
+    - {agent_id: audience-voc,             target: senior,   rationale: "Distingue evidência de inferência na voz do cliente."}
+    - {agent_id: offer-strategist,          target: senior,   rationale: "Identifica o argumento que diferencia a oferta e delimita o que é decisão humana."}
+    - {agent_id: brand-voice-guardian,      target: senior,   rationale: "Define e protege a voz; revisão mínima sem alterar fatos."}
+    - {agent_id: research-analyst,          target: senior,   rationale: "Triangula fontes e declara lacunas."}
+    - {agent_id: hook-angle-creator,        target: senior,   rationale: "Produção: ângulos distintos, específicos e sustentáveis por prova."}
+    - {agent_id: conversion-copywriter,     target: senior,   rationale: "Produção: estrutura persuasiva por estágio de consciência sem claims inventados."}
+    - {agent_id: content-copywriter,        target: senior,   rationale: "Produção: valor real ao leitor, fontes e SEO coerente."}
+    - {agent_id: ux-writer,                 target: senior,   rationale: "Produção: clareza e redução de esforço cognitivo sem inventar comportamento do sistema."}
+    - {agent_id: video-social-scriptwriter, target: senior,   rationale: "Produção: retenção, hook e adaptação por plataforma."}
+    - {agent_id: email-crm-copywriter,      target: senior,   rationale: "Produção: jornada por segmento com consentimento e métrica por e-mail."}
+    - {agent_id: localization-specialist,   target: senior,   rationale: "Produção: transcreação que preserva intenção e claims."}
+    - {agent_id: copy-editor,               target: senior,   rationale: "Qualidade: corta e reorganiza sem tocar fatos ou estratégia."}
+    - {agent_id: compliance-checker,        target: senior,   rationale: "Qualidade: cobertura de claims e distinção fato/recomendação/hipótese."}
+    - {agent_id: cro-analyst,               target: senior,   rationale: "Inteligência: rigor estatístico e priorização de hipóteses."}
+    - {agent_id: knowledge-curator,         target: senior,   rationale: "Inteligência: taxonomia, isolamento por negócio e recuperação precisa."}
+    - {agent_id: copy-publisher,            target: senior,   rationale: "Operação: integridade de payload, versão e preflight sem margem para erro."}
+    - {agent_id: approval-owner,            target: director, rationale: "Humano: decisões estratégicas e responsabilidade final pelo que é publicado."}
+  rule: >-
+    Produção = sênior; copy-chief = diretor; editor e compliance = sênior (alvo
+    explícito). O alvo é um piso: ficar abaixo dele dispara ação; ficar acima
+    não é problema, mas não deve elevar o risco nem pular gate.
+
+# ============================================================================
+# Expectativas por papel (um indicador observável por nível)
+# ============================================================================
+role_expectations:
+  copy-chief:
+    junior: "Roteia por palavra-chave; plano sem critério de sucesso; repassa perguntas em excesso."
+    pleno: "Plano completo com agentes e entregáveis; gates marcados, mas risco classificado só pela operação."
+    senior: "Plano com dependências, paralelismo e risco recalculado por claim; no máximo 5 perguntas, só as bloqueantes."
+    lead: "Gerencia a fila, mede agentes, calibra rubricas e resolve conflitos entre papéis."
+    director: "Decide escalonamento e exceção com base em risco e impacto de negócio; protege a política mesmo sob pressão de prazo."
+  brief-master:
+    junior: "Preenche o template com o que recebeu; suposições silenciosas."
+    pleno: "Brief completo, mas fatos e hipóteses misturados."
+    senior: "Fatos confirmados separados de hipóteses; KPI primário e critérios de aceite mensuráveis; perguntas cirúrgicas."
+    lead: "Padroniza briefs entre campanhas e reduz idas e voltas do time."
+    director: "Conecta o brief à estratégia do negócio e questiona o objetivo quando ele não fecha com a meta."
+  audience-voc:
+    junior: "Lista dores genéricas sem evidência."
+    pleno: "Dores e objeções com alguma evidência e categoria."
+    senior: "Frases literais anonimizadas com fonte, frequência por objeção e lacunas declaradas."
+    lead: "Cria taxonomia de objeções reaproveitável pelo time."
+    director: "Usa a voz do cliente para redefinir segmento e posicionamento."
+  offer-strategist:
+    junior: "Descreve produto e benefícios."
+    pleno: "Promessa, mecanismo e prova organizados."
+    senior: "Diferencial real, pilha de provas verificadas, urgência só legítima e opções (não decisões) de preço e garantia."
+    lead: "Harmoniza ofertas entre campanhas e define critérios de prova."
+    director: "Define posicionamento e estratégia de oferta com visão de mercado."
+  brand-voice-guardian:
+    junior: "Lista regras de estilo."
+    pleno: "Aponta desvios de tom com exemplos."
+    senior: "Guia com tom por contexto; revisão mínima que preserva intenção e fatos; severidade correta."
+    lead: "Evolui o guia com base em dados e correções humanas."
+    director: "Define a identidade verbal e arbitra casos limites."
+  research-analyst:
+    junior: "Resume o que encontrou, às vezes sem fonte."
+    pleno: "Fontes citadas e concorrentes mapeados."
+    senior: "Fato, inferência e hipótese separados; fontes primárias priorizadas; lacunas que pedem validação humana."
+    lead: "Define o protocolo de pesquisa por tipo de demanda."
+    director: "Decide quando a evidência é suficiente para sustentar uma promessa."
+  hook-angle-creator:
+    junior: "Variações de uma mesma ideia."
+    pleno: "Ângulos variados com promessa clara."
+    senior: "20+ ângulos distintos, cada um com mecanismo e prova possível, ranqueados com motivo e riscos marcados."
+    lead: "Cria bancos temáticos e critérios de ranking calibrados com resultado."
+    director: "Seleciona o conceito central da campanha."
+  conversion-copywriter:
+    junior: "Texto persuasivo genérico; CTA fraco."
+    pleno: "Estrutura completa; prova e objeções tratadas de forma básica."
+    senior: "Mensagem por estágio de consciência; apenas fatos e provas disponíveis; claims sem prova sinalizados; CTA específico."
+    lead: "Padroniza estruturas de página e orienta testes."
+    director: "Liga a copy ao posicionamento e à economia da conversão."
+  content-copywriter:
+    junior: "Texto informativo sem tese."
+    pleno: "Estrutura editorial e SEO básico."
+    senior: "Tese clara, valor ao leitor antes da persuasão, fontes citadas e especialistas acionados quando preciso."
+    lead: "Planeja calendário e padrões editoriais."
+    director: "Define linha editorial e autoridade da marca."
+  ux-writer:
+    junior: "Textos corretos, às vezes vagos."
+    pleno: "Mensagens claras e consistentes."
+    senior: "Explica o que aconteceu, por quê e o que fazer; glossário consistente; acessibilidade e limite de espaço considerados."
+    lead: "Cria guia de microcopy para o produto."
+    director: "Define o tom do produto como extensão da marca."
+  video-social-scriptwriter:
+    junior: "Roteiro linear."
+    pleno: "Hook e CTA presentes."
+    senior: "Hook específico em 3 segundos, retenção planejada, indicação visual e variações para teste."
+    lead: "Define padrões de formato por plataforma."
+    director: "Define a linguagem audiovisual da marca."
+  email-crm-copywriter:
+    junior: "E-mails soltos."
+    pleno: "Sequência com objetivo e CTA."
+    senior: "Jornada por segmento com gatilho, atraso, métrica, consentimento e fallback para quem não abre."
+    lead: "Governa a arquitetura de ciclo de vida."
+    director: "Liga CRM a retenção e receita."
+  localization-specialist:
+    junior: "Tradução literal."
+    pleno: "Tradução natural."
+    senior: "Transcreação com notas de adaptação, bandeiras culturais e claims, números e moedas fiéis."
+    lead: "Define processo e glossário por mercado."
+    director: "Decide a estratégia de entrada em mercado."
+  copy-editor:
+    junior: "Revisão gramatical."
+    pleno: "Cortes e clareza, às vezes alterando ênfase."
+    senior: "Corta 20% a 40% quando pedido, justifica cada mudança relevante, preserva claims e escala o que exige pesquisa."
+    lead: "Estabelece rubricas de edição e treina o time."
+    director: "Define o padrão de qualidade do texto da marca."
+  compliance-checker:
+    junior: "Checklist genérico de palavras proibidas."
+    pleno: "Classifica claims e aponta fontes ausentes."
+    senior: "Cobertura completa de claims, status por claim, ação exigida, políticas de plataforma e LGPD; FATO, RECOMENDAÇÃO e HIPÓTESE separados."
+    lead: "Mantém a base de regras e calibra falso positivo e falso negativo."
+    director: "Define o apetite de risco regulatório e as linhas de bloqueio."
+  cro-analyst:
+    junior: "Relata números."
+    pleno: "Compara com baseline e sugere testes."
+    senior: "Hipótese testável com variável única, tamanho amostral, critério de decisão e ICE; não declara vencedor sem significância."
+    lead: "Governa o programa de experimentação."
+    director: "Decide onde investir em teste com base em retorno esperado."
+  knowledge-curator:
+    junior: "Arquiva arquivos."
+    pleno: "Classifica por tipo e status."
+    senior: "Taxonomia por campanha, oferta, público, canal, formato e resultado; separa aprovado, rascunho, reprovado e em teste; zero mistura entre negócios."
+    lead: "Evolui a taxonomia e a política de retenção."
+    director: "Decide o que a organização aprende e esquece."
+  copy-publisher:
+    junior: "Formata e entrega."
+    pleno: "Checklist de publicação e versão."
+    senior: "Pacote completo, hash do payload calculado por scripts/approval_tools.py (nunca de cabeça), validade da decisão (decided_at + 72h), idempotência e rollback; recusa executar com qualquer divergência e só executa após a contra-assinatura do preflight pelo copy-chief."
+    lead: "Define o processo de entrega e integrações."
+    director: "Define a política de publicação e risco operacional."
+  approval-owner:
+    junior: "Aprova sem ler o payload."
+    pleno: "Lê e aprova ou reprova com comentários curtos."
+    senior: "Decide com base no payload exato, nos claims e no risco; registra razão e condições; sabe que approved_with_edits não executa e abre nova rodada."
+    lead: "Calibra amostragem e SLAs de aprovação."
+    director: "Toma as decisões estratégicas (posicionamento, preço, promessa, segmento, prioridade comercial) e assume o risco."
+
+# ============================================================================
+# Como o avaliador registra seniority_level_observed
+# ============================================================================
+observation_protocol:
+  where: "Campo seniority_level_observed do contrato agent-evaluation (enum: junior, pleno, senior, lead, director)."
+  when: "Em toda avaliação da camada quality; opcional nas camadas operational e business."
+  who: "copy-chief (avaliador padrão dos demais agentes) ou approval-owner em revisão humana por amostragem; nunca o próprio agente avaliado (para o copy-chief, script ou approval-owner, AP05)."
+  how:
+    - "1. Selecionar 3 a 5 outputs recentes do agente (pelo menos 1 de risco medium ou high, quando existir)."
+    - "2. Para cada competência geral relevante ao papel, comparar o output com a descrição de cada nível."
+    - "3. O nível de um output é o MAIS ALTO em que todas as competências relevantes estão atendidas; uma competência de nível inferior ausente rebaixa o output."
+    - "4. O nível observado do agente é a moda dos níveis dos outputs; em empate, vale o menor."
+    - "5. Registrar linha em agent-evaluations.jsonl com layer quality, metric_name seniority_level, score (índice 1 a 5: junior=1 ... director=5), threshold (índice do nível-alvo), passed e feedback com evidências por competência."
+  scoring_index: {junior: 1, pleno: 2, senior: 3, lead: 4, director: 5}
+  passed_rule: "passed = índice observado >= índice do nível-alvo."
+  evidence_required: "Feedback cita pelo menos 2 trechos ou campos de contrato que sustentam o nível atribuído."
+  hard_caps:
+    - "Output com claim inventado, ação externa sem aprovação ou dado de outro negócio é limitado a junior, independentemente do restante."
+    - "Output que mistura fato e hipótese sem marcação é limitado a pleno."
+    - "Output sem suposições, confiança e riscos explícitos no envelope é limitado a pleno."
+  anti_inflation: "Nível lead ou director só é atribuído a agentes com função de gestão ou decisão (copy-chief, approval-owner); para os demais o teto de registro é senior, mesmo com output excelente."
+
+# ============================================================================
+# Ações a partir do nível observado
+# ============================================================================
+actions:
+  below_target_once: "Registrar feedback e ver quais competências faltaram; sem mudança de prompt."
+  below_target_3_consecutive: "Abrir revisão de prompt_version, contexto e exemplos de referência; registrar em docs/agent-changelog.md."
+  above_target: "Sem ação; manter a vigilância de custo e latência."
+  recurring_cap_trigger: "Dois hard_caps no mesmo mês → suspender a autonomia do agente (todo output passa por revisão humana até nova avaliação aprovada)."
+  human_correction: "Toda correção humana (G5) registra a competência que faltou, alimentando o exemplo de referência do agente."
+review_cadence: mensal

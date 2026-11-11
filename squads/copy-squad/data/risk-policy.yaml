@@ -1,0 +1,367 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  policy_id: copy-squad-risk-policy-v1
+  purpose: >-
+    Motor de política de risco e aprovação do Copy Squad. Classifica cada
+    operação em low, medium ou high, define os gates humanos e automáticos de
+    cada nível, a amostragem do risco baixo, a expiração da aprovação e a regra
+    de payload imutável (sha256) que impede alterar a peça depois do aceite.
+    Alinhado ao ADR-001 (docs/governance-decisions.md), que prevalece em caso de conflito.
+  created_at: "2026-11-10"
+  principles:
+    - "Aprovação baseada em risco: o humano não revisa tudo, revisa o que afeta dinheiro, reputação, dados pessoais ou promessa pública."
+    - "Na dúvida, o risco sobe (fail-safe): operação ou formato não classificado é high (RISK_DEFAULT_UNCLASSIFIED)."
+    - "Decisões estratégicas (posicionamento, preço, promessa, segmento, prioridade comercial) são sempre humanas, em qualquer nível."
+    - "Toda ação externa é no mínimo risco medium (D6): low vale só para uso interno; nada low é publicado, enviado ou veiculado."
+    - "Nenhum agente publica, envia, veicula, compra mídia ou altera página sem approval-decision com decision == approved, dentro da validade (now < decision.expires_at) e com payload_sha256 igual ao do pedido e ao hash recalculado (D1, D2, D3)."
+    - "approved_with_edits nunca autoriza execução (D2): abre a rodada seguinte com novo hash e exige nova decisão approved."
+    - "A decisão é sempre do humano (approval-owner), registrada por human-cli ou human-chat-confirmed (D4); subagents nunca escrevem approval-decision."
+    - "O hash nunca é calculado por modelo: sempre por scripts/approval_tools.py hash (D1, D21)."
+    - "O risco só sobe durante o fluxo; descer exige decisão registrada do approval-owner."
+
+# ============================================================================
+# 1. Níveis de risco
+# ============================================================================
+levels:
+  low:
+    description: "Uso interno ou reversível sem exposição pública nem promessa comercial."
+    examples: [rascunho interno, pesquisa, variações de headline e CTA para teste, ideias de conteúdo, análise de performance]
+    required_reviews: []
+    quality_gates: [QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE]
+    compliance_mode: light             # reclassificação independente de claims (D6); achou claim sensível, o risco sobe
+    human_gates: []
+    human_review: sampling
+    sampling_rate: 0.20                # token SAMPLING_RATE_LOW
+    execution: "Avança automaticamente com log em handoffs.jsonl e no journey log; a amostra de 20% vira pedido de amostragem (gate SAMPLING, produzido pelo copy-publisher, D5)."
+    scope_rule: "Risco low é exclusivamente de uso interno (rascunho, pesquisa, variações para backlog ou teste, ideias): nunca é publicado, enviado ou veiculado. Qualquer operação externa (publish, send, run_ads, update_page) é no mínimo medium, exige G4 e approval-decision approved válido, com payload_sha256 igual. Peça classificada low usada externamente é reclassificada para o nível da operação externa e sai da pista rápida (prepare-approval-package + G4; G3 e compliance completo se high)."
+  medium:
+    description: "Publicação orgânica ou comunicação a base própria, sem promessa de resultado, preço, garantia ou dado pessoal de cliente. É o piso de qualquer ação externa (D6)."
+    examples: [post orgânico, artigo, newsletter, e-mail de nutrição, roteiro de vídeo orgânico, microcopy de produto]
+    required_reviews: [edit-report, brand-review, compliance-review]
+    compliance_review_mode: "leve aceito em medium sem claim sensível (checagem de claims e promessas absolutas), mas o compliance-review é obrigatório e anexado ao pedido (PUB-4)."
+    quality_gates: [QG-RESEARCH, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT]
+    quality_gates_note: "QG-RESEARCH e QG-ANGLES rodam nos workflows completos (wf-copy-production, wf-campaign-launch), com o mínimo de 20 ângulos (D11); em wf-performance-loop e wf-content-repurposing são herdados só nas condições da D12."
+    human_gates: [G1, G4]
+    conditional_gates: "G2 se campanha multi-ativo (2+ ativos); G3 se surgir claim sensível (o risco sobe para high) ou claim data_privacy (base de CRM ou captura de dados), verificado pelo compliance-checker."
+    human_review: mandatory_before_publish
+    execution: "Copy-editor, brand-voice-guardian e compliance-checker (modo leve aceito) aprovam; approval-owner decide em G4 antes de qualquer envio."
+  high:
+    description: "Exposição pública paga ou promessa comercial, ou qualquer claim sensível, dado de cliente, comparativo ou tema regulado."
+    examples: [landing page, página de vendas, anúncio pago, e-mail de venda, VSL, promessa de resultado, preço, garantia, depoimento, comparativo, saúde, finanças]
+    required_reviews: [edit-report, brand-review, compliance-review]
+    quality_gates: [QG-RESEARCH, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-LOCALIZATION, QG-PUBLISH-PREFLIGHT]
+    human_gates: [G1, G2, G3, G4]
+    human_review: explicit_before_execution
+    execution: "Compliance e aprovação explícita do approval-owner em todos os gates antes de qualquer execução. Anúncio pago é sempre high; o G3 de oferta (preço, garantia, provas) entra no pacote do G1 antes da produção (D10)."
+
+# ============================================================================
+# 2. Classificação de operação → risco base
+# ============================================================================
+operation_classification:
+  default_when_unlisted: high
+  operations:
+    # --- Trabalho interno ---------------------------------------------------
+    - {operation: internal_draft,           base_risk: low,    note: "Rascunho que não sai do squad"}
+    - {operation: research,                 base_risk: low,    note: "Pesquisa e levantamento de fontes"}
+    - {operation: headline_variation,       base_risk: low,    note: "Variações de headline para teste"}
+    - {operation: cta_variation,            base_risk: low,    note: "Variações de CTA"}
+    - {operation: content_idea,             base_risk: low,    note: "Pautas e ideias de conteúdo"}
+    - {operation: post_variation,           base_risk: low,    note: "Variação de post ou texto curto para teste e uso interno; só é low com channel internal_only e sem publicação"}
+    - {operation: angle_ideation,           base_risk: low,    note: "Banco de ângulos (não publicado)"}
+    - {operation: performance_analysis,     base_risk: low,    note: "Leitura de métricas e hipóteses"}
+    - {operation: knowledge_curation,       base_risk: low,    note: "Registro em _library"}
+    # --- Publicação orgânica -------------------------------------------------
+    - {operation: organic_post,             base_risk: medium, note: "Post, carrossel, legenda orgânicos"}
+    - {operation: article_or_newsletter,    base_risk: medium, note: "Artigo e newsletter informativos"}
+    - {operation: nurture_email,            base_risk: medium, note: "E-mail de nutrição sem oferta"}
+    - {operation: organic_video_script,     base_risk: medium, note: "Roteiro de vídeo orgânico"}
+    - {operation: ux_microcopy,             base_risk: medium, note: "Texto de interface em produção"}
+    - {operation: localization_organic,     base_risk: medium, note: "Versão localizada de peça medium"}
+    # --- Exposição comercial -------------------------------------------------
+    - {operation: landing_page,             base_risk: high,   note: "Página pública de conversão"}
+    - {operation: sales_page,               base_risk: high,   note: "Página de vendas"}
+    - {operation: paid_ad,                  base_risk: high,   note: "Anúncio pago (mídia envolve dinheiro)"}
+    - {operation: sales_email,              base_risk: high,   note: "E-mail de venda ou lançamento"}
+    - {operation: vsl_or_webinar,           base_risk: high,   note: "Vídeo de vendas"}
+    - {operation: pricing_or_guarantee_copy, base_risk: high,  note: "Qualquer texto com preço ou garantia"}
+    - {operation: testimonial_use,          base_risk: high,   note: "Uso de depoimento ou caso de cliente"}
+    - {operation: comparison_claim,         base_risk: high,   note: "Comparativo com concorrente ou alternativa"}
+    - {operation: customer_data_use,        base_risk: high,   note: "Dados pessoais ou de CRM no texto ou na segmentação"}
+    - {operation: regulated_topic,          base_risk: high,   note: "Saúde, finanças e temas regulados"}
+    - {operation: run_ads,                  base_risk: high,   note: "Veiculação de mídia"}
+    - {operation: update_page,              base_risk: high,   note: "Alteração em página publicada"}
+    - {operation: send_email_campaign,      base_risk: high,   note: "Disparo de campanha de e-mail"}
+    - {operation: sponsored_content,        base_risk: high,   note: "Conteúdo pago ou em parceria com criador; exige rótulo publicitário visível (CDC art. 36, verificar com o jurídico)"}
+
+# ============================================================================
+# 3. Escalonamento automático por claim_type
+# ============================================================================
+claim_escalation:
+  escalates_to: high
+  claim_types: [price, guarantee, result, authority, testimonial, comparison, health, financial]   # token HIGH_RISK_CLAIM_TYPES
+  rule: >-
+    Se qualquer claim extraído (compliance-review.claims[].claim_type) ou declarado pelo
+    produtor (conversion-copy.sections[].claims, video-script.claims, angles com
+    needs_approval = true) pertencer a esta lista, o risk_level do ativo e do pacote sobe
+    para high e o G3 se torna obrigatório, mesmo que a operação base seja low ou medium.
+  non_escalating_claim_types: [other]
+  conditionally_escalating_claim_types: [data_privacy]   # escala a high quando há dado pessoal de cliente na copy ou na segmentação (data_privacy_rule)
+  data_privacy_rule: >-
+    Coerente com data/compliance-reference-br.md (data_privacy: risco inicial Alto, G3/G4).
+    (a) Dado pessoal de cliente no texto ou na segmentação (nome, histórico, atributos de CRM),
+    dado sensível ou de criança: operação customer_data_use, risk_level high e G3, com revisão
+    jurídica quando sensível ou criança. (b) Uso de base de CRM ou lista de e-mails em qualquer
+    peça exige base legal (art. 7º da LGPD) e, quando for consentimento, consentimento
+    específico (art. 8º), declarados em consent_basis e verificados pelo compliance-checker
+    antes do G4; sem base declarada o envio é bloqueado. (c) Nutrição para base própria com
+    consent_basis verificado, sem dado pessoal no texto nem na segmentação, permanece medium,
+    mas o claim data_privacy continua exigindo G3. data_privacy sozinho (sem dado pessoal de
+    cliente na copy) não muda o risk_level; com dado pessoal de cliente na copy, escala a high.
+  urgency_scarcity_rule: "Claim de urgência ou escassez (claim_type other) não escala o risk_level, mas exige G3 e só segue com legitimate_urgency.exists == true com motivo real e fonte."
+  detection_order:
+    - "1. O produtor declara claims e needs_approval no contrato."
+    - "2. O compliance-checker reclassifica independentemente (nunca confia só na declaração do produtor)."
+    - "3. O copy-chief recalcula o risco do plano com o maior risco entre produtor e compliance."
+  never_downgrade: "Nenhum agente reduz o risco calculado; só o approval-owner, por decisão registrada em approval-decision.comments."
+
+fast_lane_scope:
+  workflow: wf-fast-variation
+  rule: >-
+    A fast lane atende variações para uso interno ou teste não publicado
+    (headline_variation, cta_variation, post_variation, content_idea,
+    internal_draft) com channel = internal_only. Variação de anúncio ou de post
+    que tenha destino de publicação deixa de ser low: anúncio pago é high
+    (paid_ad) e post orgânico é medium (organic_post), e ambos sobem para
+    wf-copy-production, inclusive quando o texto é curto.
+  escalation: "Destino pago, orgânico ou envio à base própria, ou qualquer claim sensível, encerra a fast lane e abre wf-copy-production."
+  compliance: "A fast lane inclui QG-COMPLIANCE em modo leve (D6): o compliance-checker reclassifica claims de forma independente. Se uma variação for publicada, sai da pista rápida: prepare-approval-package + G4 (e G3 e compliance completo se high)."
+  min_angles: "5 (MIN_ANGLES_FAST_LANE); o mínimo de 20 vale nos workflows completos (D9, D11)."
+
+risk_resolution:
+  formula: "risk_level_final = max(operation_base_risk, claim_escalation_risk, channel_risk, audience_risk)"
+  channel_risk:
+    paid_media: high
+    email_to_customer_base: medium     # base própria com consent_basis declarado e sem dado pessoal de CRM no texto ou na segmentação
+    owned_organic: medium
+    internal_only: low
+  audience_risk:
+    includes_minors_or_vulnerable_group: high
+    uses_personal_data: high           # dado de cliente na copy (nome, histórico) ou de CRM na segmentação (customer_data_use); nutrição para base própria com consent_basis verificado pelo compliance-checker e sem esses dados permanece medium
+    general_public: medium
+    internal: low
+  tie_break: "Em empate ou dúvida entre dois níveis, vale o mais alto."
+
+# ============================================================================
+# 4. Gates humanos por nível
+# ============================================================================
+human_gates:
+  G1:
+    name: "Aprovação do brief consolidado"
+    required_when: "risk_level in [medium, high]"
+    approver: approval-owner
+    reviews: [brief, offer-canvas, brand-voice-guide]
+    decides: "objetivo, oferta, público e limites"
+    request: "approve_brief, produzido pelo copy-publisher (prepare-approval-package) em 06-approval/_campaign/g1-r{n}/ (D5), com asset_id = campaign_id e channel internal (E3); caminho: copy-chief → copy-publisher → approval-owner"
+    deviation_note: "Desvio consciente da pesquisa, que trata a aprovação do briefing como ponto obrigatório de humano: em risk low (uso interno) o brief não passa por G1, e o risco é amostrado. Registrado também em knowledge/human-in-the-loop.md."
+  G2:
+    name: "Aprovação de ângulo(s)"
+    required_when: "risk_level == high OR campanha multi-ativo (2+ ativos)"
+    approver: approval-owner
+    reviews: [angles]
+    decides: "qual promessa e qual ângulo seguem para produção em escala"
+    request: "approve_angle, produzido pelo copy-publisher em 06-approval/_campaign/g2-r{n}/ (D5), com asset_id = campaign_id e channel internal (E3); shortlist de 5 ângulos; caminho: hook-angle-creator → copy-chief (QG-ANGLES) → copy-publisher → approval-owner"
+    deviation_note: "Desvio consciente da pesquisa, que trata a aprovação de ângulo como obrigatória: G2 é condicional (high ou multi-ativo) para não travar peças médias de um único ativo. O approval-owner pode exigir G2 em qualquer caso."
+  G3:
+    name: "Aprovação de claims"
+    required_when: "existe claim_type sensível (price, guarantee, result, authority, testimonial, comparison, health, financial) OU claim data_privacy OU claim de urgência ou escassez (E5; mesmo conjunto em config.yaml human_gates.gates G3)"
+    approver: approval-owner
+    reviews: [compliance-review, offer-canvas]
+    decides: "quais claims podem ser usados, com qual fonte e qual redação"
+    request: "approve_claims, produzido pelo copy-publisher (D5)"
+    moments: "Dois momentos (D10): (1) G3 de oferta, antes da produção, no mesmo pacote do G1 quando o risco é high ou há claim sensível, em 06-approval/_campaign/g3-r{n}/ (asset_id = campaign_id, E3); (2) G3 de texto, após o compliance e antes do G4, para claim que apareça na copy final sem pré-aprovação (needs_approval), em 06-approval/{asset_id}/g3-r{n}/. Redatores só usam claims pré-aprovados; claim novo sem aprovação nunca vai direto a G4."
+  G4:
+    name: "Aprovação final"
+    required_when: "risk_level in [medium, high] antes de publicar, enviar ou veicular"
+    approver: approval-owner
+    reviews: [approval-request, edit-report, brand-review, compliance-review]
+    decides: "liberar o payload exato (identificado por payload_sha256)"
+    request: "publish | send | run_ads | update_page, produzido pelo copy-publisher em 06-approval/{asset_id}/g4-r{n}/ (D5)"
+    guard: "Guard de publicação em todos os workflows (E5): approval_decision.decision == approved and gate == G4 and bound_match and approval_decision.payload_sha256 == recalculated_payload_sha256. Não existe ramo G4.required == false para ação externa (D6)."
+    preflight_timing: "QG-PUBLISH-PREFLIGHT é pós-decisão (E4): roda depois do G4 e antes da execução; não é pré-requisito do G4. A execução é de PUBLISH_EXECUTORS = [human, main_session]; nenhum subagent executa ação externa. Compra, configuração e veiculação de mídia são execução externa (G4 + humano/sessão principal); a copy do anúncio é escopo do squad."
+  G5:
+    name: "Correção de falha de agente"
+    required_when: "o humano corrigiu um output de agente"
+    approver: approval-owner
+    reviews: [correção aplicada]
+    decides: "a correção vira learning-record de referência (origin human_correction)"
+    request: "G5 não usa approval-request (D5): é tasks/correct-agent-failure.md que gera o learning-record"
+  SAMPLING:
+    name: "Amostragem de revisão (risco low, uso interno)"
+    required_when: "asset low sorteado por scripts/approval_tools.py sample <asset_id> (D21) ou incluído por forced_inclusion"
+    approver: approval-owner
+    reviews: [edit-report, brand-review, compliance-review]
+    decides: "se a peça interna segue como está, com edições ou é reprovada; nunca autoriza ação externa"
+    request: "operation internal_use, produzido pelo copy-publisher em 06-approval/{asset_id}/sampling-r{n}/ (D5)"
+    note: "SAMPLING é valor do campo gate de approval-request e não é gate humano G1 a G5."
+  sla_hours: 24                        # token SLA_HUMAN_GATE_HOURS
+  decision_values: [approved, approved_with_edits, rejected]
+  decision_effects:
+    approved: "Única decisão que autoriza execução externa, e somente com hash igual e dentro de decision.expires_at."
+    approved_with_edits: "Não autoriza execução (D2): o copy-publisher aplica as edições, gera v{n+1}, abre a rodada {gate}-r{n+1} com novo payload_sha256 e o approval-owner confirma com approved."
+    rejected: "Encerra a rodada; o fluxo volta para a fase indicada nos comentários."
+  silence_is_not_approval: "Ausência de resposta nunca é aprovação (D3): passado o prazo de resposta (approval-request.expires_at = criação + 72h), o pedido continua pendente, o copy-chief reenvia ou escala (evento approval_response_overdue) e não há veto automático por silêncio."
+  decision_provenance: "approval-decision é escrito somente pelo humano (D4), por recorded_via human-cli (approval_tools.py decide, no Claude Code com o prefixo !) ou human-chat-confirmed (transcrição literal da mensagem do humano em comments). Campos: human_attested true, recorded_via, reviewer presente em config.yaml human_gates.approvers, meta.produced_by approval-owner e sem meta.model nem meta.prompt_version. Aprovadores vazios para o {business} bloqueiam qualquer G4. Limitação: a proveniência é procedimental, não criptográfica."
+
+# ============================================================================
+# 5. Quality gates automáticos por nível
+# ============================================================================
+automatic_gates_by_level:
+  low:    [QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE]
+  medium: [QG-RESEARCH, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-PUBLISH-PREFLIGHT]
+  high:   [QG-RESEARCH, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-LOCALIZATION, QG-PUBLISH-PREFLIGHT]
+  note: >-
+    Mesmo em risco low, QG-COMPLIANCE roda em modo leve (checagem de claims e de
+    promessas absolutas); se encontrar claim sensível, o risco sobe e o fluxo muda
+    para o conjunto high. QG-LOCALIZATION entra quando há target_locale.
+    QG-RESEARCH e QG-ANGLES de medium valem nos workflows completos; a fast lane
+    (low) não os executa. A sequência por workflow é gate_sequence_by_workflow em
+    data/quality-gates.yaml.
+
+# ============================================================================
+# 6. Amostragem do risco baixo
+# ============================================================================
+sampling:
+  low_risk_rate: 0.20                  # token SAMPLING_RATE_LOW
+  medium_risk_post_publish_audit_rate: 0.10    # token SAMPLING_RATE_MEDIUM_AUDIT
+  selection: >-
+    Determinística e auditável: um ativo low entra na amostra quando
+    int(sha256(asset_id)[0:8], 16) / 0xFFFFFFFF < low_risk_rate, calculado por
+    python squads/copy-squad/scripts/approval_tools.py sample <asset_id> [--rate 0.20]
+    (D21), nunca por modelo. O mesmo asset_id sempre produz a mesma decisão, o que
+    evita escolha enviesada pelo agente.
+  forced_inclusion:
+    - "primeira peça de um agente após mudança de prompt_version"
+    - "peça cujo agente teve avaliação reprovada nos últimos 7 dias"
+    - "peça cujo confidence < 0.70"
+  outcome_use: "A revisão por amostragem gera agent-evaluation (camada quality) e, quando humano corrige, G5."
+  record: "approval-request com gate SAMPLING e operation internal_use, produzido pelo copy-publisher em 06-approval/{asset_id}/sampling-r{n}/ (D5); a approval-decision correspondente traz comments 'amostragem'. QG-BRAND roda completo em todas as peças low; a amostragem de 20% é só da revisão humana."
+
+# ============================================================================
+# 7. Expiração da aprovação
+# ============================================================================
+expiration:
+  approval_ttl_hours: 72               # token APPROVAL_TTL_HOURS
+  request_expires_at: "approval-request.expires_at = criação + 72h = prazo de resposta (D3). Passou sem decisão: o pedido continua pendente; o copy-chief reenvia ou escala. Não há veto automático por silêncio."
+  starts_at: "approval-decision.decided_at"
+  expires_at_rule: "approval-decision.expires_at = decided_at + 72h = janela de execução (D3). O preflight verifica decided_at <= now < decision.expires_at e expires_at == decided_at + 72h (tolerância de 60 s); comments não vazio quando recorded_via == human-chat-confirmed (E2). O expires_at do pedido não é critério de execução."
+  on_expired:
+    action: "Decisão expirada: VETO em QG-PUBLISH-PREFLIGHT e nova rodada {gate}-r{n+1}; o copy-publisher abre novo approval-request com o mesmo payload (se o sha256 não mudou) e referência à decisão expirada."
+    reapproval_scope: "O approval-owner reconfirma com approved; se o payload for idêntico, a revisão pode ser rápida (reconfirmação), sem refazer os quality gates."
+  changes_that_invalidate_approval:
+    - "qualquer alteração de texto, preço, destino, canal, segmentação ou data de envio"
+    - "mudança de brand-voice-guide vigente"
+    - "novo compliance-review com risco maior"
+    - "revogação explícita pelo approval-owner"
+  revocation: "Aprovação pode ser revogada a qualquer momento por novo approval-decision com decision rejected; o publisher consulta o decision mais recente antes de executar."
+
+# ============================================================================
+# 8. Payload imutável e idempotência
+# ============================================================================
+payload_integrity:
+  algorithm: sha256
+  canonicalization:
+    - "payload_sha256 = sha256(json.dumps(payload, sort_keys=True, separators=(',',':'), ensure_ascii=False).encode('utf-8')), em hexadecimal minúsculo (64 caracteres), conforme contracts/approval-request.schema.json (D1). O hash cobre somente o objeto approval-request.payload."
+    - "O hash nunca é calculado de cabeça por um modelo: o cálculo é sempre por python squads/copy-squad/scripts/approval_tools.py hash <approval-request.json> (D21). sha_match: true sem a saída do script é inválido."
+    - "Sem normalização adicional (NFC, LF) além da serialização acima; o texto entra no hash exatamente como está no payload."
+    - "destination, channel e operation NÃO entram no hash: o approval-request ganha o campo obrigatório channel (internal em G1, G2, G3 de oferta e amostragem) e a approval-decision traz bound_to = {gate, operation, destination, channel} copiado do pedido pelo decide (E1). O preflight compara bound_to e esses campos por igualdade com o pedido e com o que será executado; qualquer divergência é VETO (ON_PAYLOAD_MISMATCH)."
+    - "verify --for-execution (preflight) exige ainda request.gate == G4, operation em {publish, send, run_ads, update_page} e risk_level != low; com --payload <arquivo> compara também o hash D1 do conteúdo a executar com request.payload_sha256. --now e --config só valem com COPY_SQUAD_TEST_MODE=1 (fora disso o script recusa, exit 2). Subcomando content-hash <arquivo.json> é o único método de content_sha256 (E1)."
+  hash_format: "64 caracteres hexadecimais minúsculos (payload_sha256)"
+  workflow:
+    - "1. O copy-publisher (produtor único de approval-request, D5) monta approval-request.payload (conteúdo final exato, com a versão) e calcula payload_sha256 com approval_tools.py hash."
+    - "2. O approval-owner vê o payload e decide; approval-decision repete o mesmo payload_sha256."
+    - "3. Em approved_with_edits, nada é executado (D2): o copy-publisher aplica as edits, gera nova versão (v{n+1}), abre a rodada {gate}-r{n+1} com novo hash e o approval-owner confirma com approved."
+    - "4. Depois da decisão e antes de executar, o copy-publisher roda approval_tools.py verify --for-execution --payload (hash recalculado = pedido = decisão; bound_to = pedido; decision == approved; decided_at <= now < decision.expires_at; human_attested; recorded_via válido; reviewer em human_gates.approvers) e o copy-chief reexecuta sem flags de teste e contra-assina (D8, E1, E4)."
+    - "5. Divergência = VETO (ON_PAYLOAD_MISMATCH); nada é executado e um novo approval-request é aberto."
+  immutability: "Payload aprovado é imutável: o arquivo da versão aprovada não é alterado; mudanças viram nova versão com novo hash e nova aprovação."
+  verification_record: "publish-receipt.verification = {sha_match, approval_valid, not_expired, bound_match, verify_ok, counter_signed_by, counter_signed_at}, todos obrigatórios (counter_signed_by const copy-chief); os cinco booleanos true para outcome published/scheduled/handed_off (E4)."
+
+idempotency:
+  key_format: "{campaign_id}:{asset_id}:{gate em minúsculas}:r{n}:{first_12_of_payload_sha256}"   # E3; pattern no schema; em G1, G2 e G3 de oferta asset_id = campaign_id; gate SAMPLING vira sampling
+  rule: "A mesma idempotency_key nunca executa duas vezes; segunda tentativa retorna o publish-receipt existente."
+  scope: "Por rodada de gate e payload. Reenvio legítimo (mesmo payload, novo destino ou nova data) abre nova rodada e gera nova chave; destination, channel e operation são conferidos pelo bound_to, não pela chave."
+  stored_in: ["approval-request.idempotency_key", "publish-receipt.external_reference (quando houver)"]
+
+# ============================================================================
+# 9. Comportamento diante de falha de política
+# ============================================================================
+failure_modes:
+  - {case: "operação ausente da tabela", action: "tratar como high e registrar assumption", owner: copy-chief}
+  - {case: "claim sensível descoberto depois do G4", action: "VETO, revogar aprovação, voltar ao QG-COMPLIANCE e abrir novo G3 e G4", owner: compliance-checker}
+  - {case: "approval-owner indisponível", action: "peça aguarda; nenhum agente substitui o humano; copy-chief registra bloqueio", owner: copy-chief}
+  - {case: "sha256 divergente", action: "VETO e novo approval-request", owner: copy-publisher}
+  - {case: "bound_to divergente de gate, operation, destination ou channel do pedido", action: "VETO (bound_match = false) e novo approval-request", owner: copy-publisher}
+  - {case: "subagent tenta executar ação externa", action: "bloquear: a execução é só do humano ou da sessão principal (PUBLISH_EXECUTORS, E4); registrar violação", owner: copy-chief}
+  - {case: "decisão expirada (now >= decision.expires_at)", action: "VETO e nova rodada de reconfirmação com approved", owner: copy-publisher}
+  - {case: "pedido sem resposta além do prazo (request.expires_at)", action: "permanece pendente; copy-chief reenvia ou escala; sem veto automático (D3)", owner: copy-chief}
+  - {case: "approval-decision sem human_attested, sem recorded_via válido ou com reviewer fora de human_gates.approvers", action: "inválida: VETO no preflight e registrar violação (AUT-08)", owner: copy-publisher}
+  - {case: "agente tenta ação externa sem aprovação", action: "bloquear, registrar violação no agent-run (status blocked) e abrir avaliação de segurança", owner: copy-chief}
+
+# ============================================================================
+# 10. Exemplos de classificação (ilustrativos)
+# ============================================================================
+examples:
+  - id: EX-01
+    request: "Gerar 15 variações de headline e CTA para um anúncio já aprovado (exemplo ilustrativo)."
+    operation: headline_variation
+    claims_detected: []
+    channel: internal_only
+    risk_final: low
+    gates: "QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE; amostragem de 20%"
+    workflow: wf-fast-variation
+  - id: EX-02
+    request: "Newsletter quinzenal com dicas de organização do caixa para pequenas empresas, sem oferta (exemplo ilustrativo)."
+    operation: article_or_newsletter
+    claims_detected: []
+    channel: owned_organic
+    risk_final: medium
+    gates: "G1 no primeiro brief; G4 antes do envio; edit-report e brand-review obrigatórios"
+    workflow: wf-copy-production
+  - id: EX-03
+    request: "Landing page de uma mentoria de gestão financeira com garantia de 7 dias (exemplo ilustrativo)."
+    operation: landing_page
+    claims_detected: [guarantee, price]
+    channel: paid_media
+    risk_final: high
+    gates: "G1, G2, G3 (garantia e preço), G4; compliance-review obrigatório"
+    workflow: wf-campaign-launch
+  - id: EX-04
+    request: "Post orgânico com o depoimento de um cliente (exemplo ilustrativo)."
+    operation: organic_post
+    claims_detected: [testimonial]
+    channel: owned_organic
+    risk_final: high              # escalonamento por claim_type testimonial
+    gates: "G3 (usage_rights do depoimento), G4"
+    workflow: wf-copy-production
+  - id: EX-05
+    request: "Texto de erro de formulário em produto SaaS de fluxo de caixa (exemplo ilustrativo)."
+    operation: ux_microcopy
+    claims_detected: []
+    channel: owned_organic
+    risk_final: medium
+    gates: "edit-report, brand-review, G4"
+    workflow: wf-copy-production
+  - id: EX-06
+    request: "Roteiro de Reels afirmando que o método 'dobra o faturamento em 30 dias' (exemplo ilustrativo)."
+    operation: organic_video_script
+    claims_detected: [result]
+    channel: owned_organic
+    risk_final: high
+    gates: "G3 bloqueia até haver fonte verificável; sem fonte, claim removido ou reescrito como hipótese"
+    workflow: wf-copy-production
+  - id: EX-07
+    request: "Operação não prevista: 'produzir um texto para um parceiro externo usar' (exemplo ilustrativo)."
+    operation: unlisted
+    risk_final: high
+    gates: "Tratada como high até o copy-chief classificar e o approval-owner confirmar"
+    workflow: wf-copy-production

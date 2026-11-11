@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "prf-lp-mentoria-20261110",
+    "artifact_type": "performance-analysis",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "cro-analyst",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.7,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "analysis_phase": "result",
+  "period": {
+    "start": "2026-11-01",
+    "end": "2026-11-09"
+  },
+  "asset_ids": [
+    "cvc-lp-mentoria-v2"
+  ],
+  "metrics": {
+    "visitors": 1200,
+    "conversions": 36,
+    "conversion_rate": 0.03,
+    "note": "números ilustrativos"
+  },
+  "baseline": {
+    "conversion_rate": 0.022
+  },
+  "target": {
+    "conversion_rate": 0.035
+  },
+  "sample_size": 1200,
+  "findings": [
+    {
+      "finding": "A taxa de conversão ficou acima da linha de base no período (dados ilustrativos).",
+      "evidence": "36 conversões em 1200 visitantes versus baseline de 2,2%",
+      "statistical_note": "Amostra pequena; sem teste A/B concorrente, não há causalidade."
+    }
+  ],
+  "winner_declared": false,
+  "significance": {
+    "method": "não aplicável (sem grupo controle)",
+    "p_value": null,
+    "confidence_level": 0.0,
+    "criterion": "Declarar vencedor só com teste concorrente e amostra mínima definida"
+  },
+  "hypotheses": [
+    {
+      "hypothesis": "Mover a garantia para perto do CTA aumenta a conversão",
+      "variable": "posição do bloco de garantia",
+      "expected_effect": "aumento relativo moderado na taxa de conversão",
+      "test_design": "A/B com 50/50 de tráfego, métrica primária conversão, duração mínima de duas semanas",
+      "priority": "high",
+      "ice": {
+        "impact": 7,
+        "confidence": 5,
+        "ease": 8
+      }
+    }
+  ],
+  "epistemic": {
+    "facts": [
+      "36 conversões em 1200 visitantes no período [FONTE:.data/copy-squad/exemplo-negocio/camp-fluxo-caixa-lancamento/08-performance/]"
+    ],
+    "recommendations": [
+      "Posição: rodar teste A/B da garantia. Justificativa: hipótese de alto ICE. Confiança: MEDIA"
+    ],
+    "hypotheses": [
+      "A prova de garantia reduz a objeção de risco (sem evidência direta; validar com A/B)"
+    ]
+  },
+  "next_actions": [
+    "Desenhar teste A/B da posição da garantia",
+    "Registrar aprendizado após o teste"
+  ]
+}

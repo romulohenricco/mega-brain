@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:brief:v1",
+  "title": "Brief de Campanha",
+  "description": "Brief operacional consolidado: objetivo de negócio, KPI, público, oferta, canal, tom, critérios de aceite, fatos confirmados e hipóteses a validar. Com meta.status needs_input, campos ainda não confirmados podem faltar ou ficar vazios (nunca presumidos) e devem aparecer em open_questions; nos demais status todos os campos obrigatórios são exigidos.",
+  "type": "object",
+  "required": [
+    "meta"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "business_objective": {
+      "type": "string"
+    },
+    "primary_kpi": {
+      "type": "string"
+    },
+    "secondary_kpis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "audience": {
+      "type": "object",
+      "properties": {
+        "segment": {
+          "type": "string"
+        },
+        "pain_points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "desires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "objections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "awareness_stage": {
+          "enum": [
+            "unaware",
+            "problem_aware",
+            "solution_aware",
+            "product_aware",
+            "most_aware"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "offer": {
+      "type": "object",
+      "properties": {
+        "promise": {
+          "type": "string"
+        },
+        "mechanism": {
+          "type": "string"
+        },
+        "proof": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "price": {
+          "type": "string"
+        },
+        "guarantee": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "channel": {
+      "type": "string"
+    },
+    "formats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tone_of_voice": {
+      "type": "string"
+    },
+    "must_include": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "must_avoid": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confirmed_facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hypotheses_to_validate": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "meta"
+        ],
+        "properties": {
+          "meta": {
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "needs_input"
+              }
+            }
+          }
+        }
+      },
+      "then": {},
+      "else": {
+        "required": [
+          "business_objective",
+          "primary_kpi",
+          "audience",
+          "offer",
+          "channel",
+          "tone_of_voice",
+          "acceptance_criteria"
+        ],
+        "properties": {
+          "business_objective": {
+            "minLength": 1
+          },
+          "primary_kpi": {
+            "minLength": 1
+          },
+          "channel": {
+            "minLength": 1
+          },
+          "tone_of_voice": {
+            "minLength": 1
+          },
+          "acceptance_criteria": {
+            "minItems": 1
+          },
+          "audience": {
+            "required": [
+              "segment",
+              "awareness_stage"
+            ],
+            "properties": {
+              "segment": {
+                "minLength": 1
+              }
+            }
+          },
+          "offer": {
+            "required": [
+              "promise"
+            ],
+            "properties": {
+              "promise": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

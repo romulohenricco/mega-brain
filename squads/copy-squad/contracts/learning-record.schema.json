@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:learning-record:v1",
+  "title": "Learning Record (aprendizado registrado)",
+  "description": "Aprendizado reutilizável originado de CRO, correção humana (G5), debrief de campanha, feedback de cliente ou falha de QA. Só registros com learning_status approved alimentam a biblioteca como referência.",
+  "type": "object",
+  "required": [
+    "meta",
+    "origin",
+    "result",
+    "decision",
+    "next_action",
+    "applies_to",
+    "learning_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "origin": {
+      "enum": [
+        "cro",
+        "human_correction",
+        "campaign_debrief",
+        "qa_failure",
+        "customer_feedback"
+      ]
+    },
+    "hypothesis": {
+      "type": "string"
+    },
+    "variation": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "applies_to": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "offer": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        }
+      }
+    },
+    "reference_example": {
+      "type": "object",
+      "required": [
+        "before",
+        "after",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "learning_status": {
+      "enum": [
+        "approved",
+        "draft",
+        "rejected",
+        "testing"
+      ]
+    },
+    "review_after": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:edit-report:v1",
+  "title": "Edit Report",
+  "description": "Contrato de saída do copy-editor: relatório de edição com seções editadas, mudanças classificadas (corte, reescrita, reordenação, clareza), contagem de palavras, preservação de claims e nota de qualidade. O editor não altera claims nem fatos.",
+  "type": "object",
+  "required": [
+    "meta",
+    "original_copy_id",
+    "edited_sections",
+    "changes",
+    "word_count_before",
+    "word_count_after",
+    "preserved_claims",
+    "quality_score"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "original_copy_id": {
+      "type": "string",
+      "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*-v[0-9]+$",
+      "description": "meta.artifact_id da versão exata do draft revisado, no formato {asset_id}-v{n} (D14)."
+    },
+    "edited_sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "section",
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "before",
+          "after",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "cut",
+              "rewrite",
+              "reorder",
+              "clarity"
+            ]
+          },
+          "before": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "word_count_before": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "word_count_after": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reduction_pct": {
+      "type": "number"
+    },
+    "preserved_claims": {
+      "type": "boolean"
+    },
+    "remaining_risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quality_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

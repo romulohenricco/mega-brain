@@ -1,0 +1,12 @@
+{
+  "evaluation_id": "evl-exemplo",
+  "agent_run_id": "run-exemplo",
+  "agent_name": "brief-master",
+  "evaluator": "approval-owner",
+  "layer": "quality",
+  "metric_name": "brief_completeness",
+  "score": 0.8,
+  "passed": true,
+  "created_at": "2026-11-10T15:00:00-03:00",
+  "business": "exemplo-negocio"
+}

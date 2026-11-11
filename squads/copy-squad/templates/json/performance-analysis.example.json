@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "prf-exemplo",
+    "artifact_type": "performance-analysis",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "cro-analyst",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "analysis_phase": "result",
+  "period": {
+    "start": "2026-11-01",
+    "end": "2026-11-07"
+  },
+  "asset_ids": [
+    "cvc-anuncio-v1"
+  ],
+  "metrics": {
+    "ctr": 0.012
+  },
+  "sample_size": 0,
+  "findings": [
+    {
+      "finding": "Exemplo de achado",
+      "evidence": "Exemplo de evidência"
+    }
+  ],
+  "winner_declared": false,
+  "hypotheses": [
+    {
+      "hypothesis": "Exemplo de hipótese",
+      "variable": "headline",
+      "expected_effect": "aumento de CTR",
+      "test_design": "A/B de headline",
+      "priority": "medium"
+    }
+  ],
+  "epistemic": {
+    "facts": [],
+    "recommendations": [],
+    "hypotheses": []
+  },
+  "next_actions": [
+    "Exemplo de próxima ação"
+  ]
+}

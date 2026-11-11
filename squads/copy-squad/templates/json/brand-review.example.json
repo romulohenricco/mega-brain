@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "bvr-exemplo-v1",
+    "artifact_type": "brand-review",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "brand-voice-guardian",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "text_id": "cvc-exemplo-v1",
+  "brand_guide_id": "bvg-exemplo",
+  "brand_alignment_score": 80,
+  "tone_match": "Alinhado",
+  "issues": [
+    {
+      "severity": "low",
+      "excerpt": "trecho",
+      "problem": "problema",
+      "suggested_revision": "revisão",
+      "reason": "motivo"
+    }
+  ],
+  "approved_for_next_stage": true
+}

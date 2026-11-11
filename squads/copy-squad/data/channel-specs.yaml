@@ -1,0 +1,259 @@
+# Especificações por canal — limites e boas práticas para copy
+# Fonte de apoio dos agentes de produção (conversion-copywriter, email-crm-copywriter,
+# content-copywriter, video-social-scriptwriter, ux-writer) e do compliance-checker.
+#
+# AVISO GLOBAL: plataformas mudam limites e políticas com frequência. Cada canal traz
+# a nota "verificar política vigente da plataforma". Só constam números de alta
+# confiança; o que é prática de mercado (e não limite técnico) está marcado como
+# kind: recommendation. Em caso de dúvida, o agente deve sinalizar a incerteza e
+# não presumir o limite.
+
+version: "1.0.0"
+updated_at: "2026-11-10"
+confidence_legend:
+  hard_limit: "limite técnico documentado pela plataforma; ainda assim verificar a versão vigente"
+  recommendation: "prática de mercado; não é limite técnico e varia por dispositivo e contexto"
+  qualitative: "sem número confiável; seguir a orientação descrita"
+global_rules:
+  - "Contar caracteres com espaços."
+  - "Respeitar o limite mais restrito quando o texto for reutilizado em vários canais."
+  - "Todo claim sensível (preço, garantia, resultado, autoridade, depoimento, comparativo, saúde, finanças), claim de data_privacy ou de urgência/escassez segue para compliance-checker e G3."
+  - "Nenhum canal autoriza urgência, escassez, autoridade ou prova falsas."
+  - "Texto de anúncio pago é risco alto por padrão (data/risk-policy.yaml)."
+  - "Post orgânico é risco médio; qualquer publicação, envio ou veiculação é no mínimo médio e passa pelo G4. Risco baixo vale só para uso interno (docs/governance-decisions.md, D6)."
+  - "Conteúdo patrocinado e parcerias pagas exigem identificação clara de publicidade (ver data/compliance-reference-br.md)."
+
+channels:
+  google_ads_rsa:
+    name: "Google Ads — anúncio responsivo de pesquisa (RSA)"
+    format: ad
+    notes_verify: "verificar política vigente da plataforma"
+    fields:
+      headline:
+        max_chars: 30
+        quantity: {min: 3, max: 15}
+        kind: hard_limit
+      description:
+        max_chars: 90
+        quantity: {min: 2, max: 4}
+        kind: hard_limit
+      display_path:
+        max_chars_per_field: 15
+        fields: 2
+        kind: hard_limit
+    best_practices:
+      - "Variar os títulos entre benefício, prova, ação e palavra-chave; evitar repetição entre eles."
+      - "Cada título deve fazer sentido sozinho, pois a combinação é automática."
+      - "Incluir ao menos uma palavra-chave principal em alguns títulos."
+      - "Descrições com CTA claro e diferencial verificável."
+    risks:
+      - "Superlativos e claims sem comprovação podem reprovar o anúncio."
+      - "Setores regulados (saúde, finanças) têm regras adicionais."
+
+  meta_ads:
+    name: "Meta Ads — Facebook e Instagram"
+    format: ad
+    notes_verify: "verificar política vigente da plataforma"
+    fields:
+      primary_text:
+        visible_chars_recommended: 125
+        kind: recommendation
+        note: "o texto pode ser exibido truncado com 'ver mais'; colocar a ideia principal no início"
+      headline:
+        chars_recommended: 40
+        kind: recommendation
+        note: "pode ser cortado conforme posicionamento e dispositivo"
+      description:
+        chars_recommended: 30
+        kind: recommendation
+    best_practices:
+      - "Primeira linha com hook específico; o restante pode aprofundar."
+      - "Uma ideia e um CTA por anúncio."
+      - "Criar variações de ângulo, não só de palavras."
+      - "Linguagem alinhada ao criativo (imagem ou vídeo) para não gerar contradição."
+    risks:
+      - "Políticas restringem alegações pessoais ('você está endividado'), antes/depois e resultados garantidos."
+      - "Categorias especiais (finanças, saúde, emprego) têm regras próprias."
+
+  email:
+    name: "E-mail — assunto e preheader"
+    format: email
+    notes_verify: "verificar política vigente da plataforma e do provedor de envio"
+    fields:
+      subject:
+        chars_recommended: {min: 30, max: 50}
+        kind: recommendation
+        note: "aplicativos móveis exibem menos caracteres; o contrato limita em 80 como teto"
+        contract_max_chars: 80
+      preview_text:
+        chars_recommended: {min: 40, max: 90}
+        kind: recommendation
+        contract_max_chars: 140
+    best_practices:
+      - "Assunto e preheader trabalham juntos; não repetir o mesmo texto."
+      - "Evitar caixa alta, excesso de pontuação e símbolos, que prejudicam entregabilidade."
+      - "Um objetivo e um CTA principal por e-mail."
+      - "Incluir link de descadastro e identificação do remetente."
+      - "Prever caminho alternativo para quem não abre (reenvio com novo assunto)."
+    compliance:
+      - "Só enviar a quem tem base de consentimento declarada (email-journey.consent_basis)."
+      - "Respeitar LGPD e preferências do titular."
+
+  sms:
+    name: "SMS"
+    format: sms
+    notes_verify: "verificar política vigente da plataforma e da operadora"
+    fields:
+      single_segment_gsm7:
+        max_chars: 160
+        kind: hard_limit
+        note: "alfabeto GSM 7-bit"
+      single_segment_unicode:
+        max_chars: 70
+        kind: hard_limit
+        note: "ao usar caracteres fora do GSM 7-bit (vários acentos do português, como ã e õ, e emojis), a mensagem passa a Unicode"
+      concatenated_segment_gsm7:
+        max_chars: 153
+        kind: hard_limit
+      concatenated_segment_unicode:
+        max_chars: 67
+        kind: hard_limit
+    best_practices:
+      - "Identificar o remetente logo no início."
+      - "Um CTA e um link curto."
+      - "Incluir instrução de saída (por exemplo, 'Responda SAIR')."
+      - "Evitar acentuação desnecessária quando o custo por segmento for relevante, sem degradar a clareza."
+    compliance:
+      - "Exige base de consentimento e respeito aos horários de contato."
+
+  push_notification:
+    name: "Notificação push (app e web)"
+    format: push
+    notes_verify: "verificar política vigente da plataforma"
+    fields:
+      title:
+        guidance: "curto; o dispositivo e o sistema operacional truncam de forma diferente"
+        kind: qualitative
+      body:
+        guidance: "uma frase; a ação principal nas primeiras palavras"
+        kind: qualitative
+    best_practices:
+      - "Texto útil e específico para o momento do usuário."
+      - "Evitar frequência alta; push intrusivo aumenta desativação."
+      - "Personalizar com dado que o usuário aceitou compartilhar."
+
+  seo_page:
+    name: "SEO — título e meta description"
+    format: content
+    notes_verify: "verificar política vigente da plataforma (os buscadores reescrevem snippets)"
+    fields:
+      meta_title:
+        chars_recommended_max: 60
+        kind: recommendation
+        contract_max_chars: 60
+        note: "o corte real depende da largura em pixels"
+      meta_description:
+        chars_recommended_max: 160
+        kind: recommendation
+        contract_max_chars: 160
+        note: "o buscador pode mostrar outro trecho da página"
+      h1:
+        guidance: "um H1 por página, alinhado à intenção de busca"
+        kind: qualitative
+    best_practices:
+      - "Palavra-chave principal perto do início do título."
+      - "Descrição com benefício e convite à ação, sem exagero."
+      - "Combinar com a intenção de busca: informacional, navegacional, comercial ou transacional."
+      - "Não duplicar títulos e descrições entre páginas."
+
+  youtube:
+    name: "YouTube — vídeo longo"
+    format: video
+    notes_verify: "verificar política vigente da plataforma"
+    fields:
+      title:
+        max_chars: 100
+        kind: hard_limit
+        visible_chars_recommended: 60
+      description:
+        max_chars: 5000
+        kind: hard_limit
+        note: "as primeiras linhas aparecem antes de 'mostrar mais'; colocar valor e link importante no começo"
+    best_practices:
+      - "Hook nos primeiros segundos: promessa específica do vídeo, sem enganar."
+      - "Título e miniatura prometem a mesma coisa que o vídeo entrega."
+      - "Capítulos e CTA no momento certo, sem interromper a retenção no início."
+    risks:
+      - "Título e miniatura enganosos prejudicam retenção e podem violar políticas."
+
+  reels_shorts:
+    name: "Vídeos curtos — Reels, Shorts e similares"
+    format: video
+    notes_verify: "verificar política vigente da plataforma (durações máximas mudaram várias vezes)"
+    fields:
+      duration:
+        guidance: "confirmar a duração máxima vigente em cada plataforma antes de roteirizar; priorizar vídeos curtos"
+        kind: qualitative
+      hook:
+        guidance: "a ideia principal nos primeiros 3 segundos"
+        kind: recommendation
+      caption:
+        guidance: "primeira linha com hook; CTA ao final; hashtags com moderação"
+        kind: qualitative
+    best_practices:
+      - "Texto na tela para quem assiste sem som."
+      - "Um único assunto por vídeo."
+      - "Direção visual acompanhando cada bloco de fala."
+      - "Gerar variações de hook para teste."
+
+  linkedin:
+    name: "LinkedIn — post orgânico e anúncio"
+    format: social
+    notes_verify: "verificar política vigente da plataforma"
+    fields:
+      post_organic:
+        max_chars: 3000
+        kind: hard_limit
+        note: "apenas as primeiras linhas aparecem antes de 'ver mais'; abrir com o hook"
+      ad_intro_text:
+        chars_recommended: 150
+        kind: recommendation
+      ad_headline:
+        chars_recommended: 70
+        kind: recommendation
+    best_practices:
+      - "Tom profissional e direto; foco em problema de negócio e aprendizado concreto."
+      - "Parágrafos curtos e uma ideia por linha."
+      - "CTA único; evitar múltiplos links."
+    risks:
+      - "Dados de resultado e depoimentos precisam de fonte e autorização."
+
+  landing_page:
+    name: "Landing page"
+    format: landing_page
+    notes_verify: "verificar política vigente da plataforma (anúncios que apontam para a página também são avaliados)"
+    structure_recommended:
+      - "Hero: promessa clara, subtítulo, CTA primário"
+      - "Problema ou contexto do público"
+      - "Mecanismo: como funciona"
+      - "Prova: depoimentos, dados, demonstrações verificados"
+      - "Oferta: o que inclui, preço, garantia, condições"
+      - "Objeções e FAQ"
+      - "CTA final e redução de risco"
+    fields:
+      headline:
+        guidance: "uma promessa específica; deve ser coerente com o anúncio ou e-mail de origem (message match)"
+        kind: qualitative
+      cta_button:
+        guidance: "verbo + resultado ('Baixar o guia de fluxo de caixa'); evitar 'Enviar'"
+        kind: qualitative
+      form:
+        guidance: "pedir apenas os dados necessários; informar uso dos dados e base legal"
+        kind: qualitative
+    best_practices:
+      - "Um objetivo por página e um CTA primário."
+      - "Garantir que preço, prazos e condições coincidam com o que foi aprovado (offer-canvas)."
+      - "Incluir política de privacidade e termos."
+    risks:
+      - "Contador regressivo e vagas limitadas só com urgência legítima."
+      - "Depoimentos exigem autorização de uso (usage_rights)."

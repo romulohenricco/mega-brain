@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:content-piece:v1",
+  "title": "Content Piece",
+  "description": "Contrato de saída do content-copywriter: peça de conteúdo (artigo, newsletter, post, carrossel ou guia) com tese, estrutura, corpo e metadados de SEO.",
+  "type": "object",
+  "required": [
+    "meta",
+    "brief_id",
+    "format",
+    "title",
+    "thesis",
+    "outline",
+    "body"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "brief_id": {
+      "type": "string"
+    },
+    "format": {
+      "enum": [
+        "article",
+        "newsletter",
+        "post",
+        "carousel",
+        "guide",
+        "case_study",
+        "white_paper",
+        "manifesto",
+        "tagline"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "thesis": {
+      "type": "string"
+    },
+    "outline": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "body": {
+      "type": "string"
+    },
+    "cta": {
+      "type": "string"
+    },
+    "seo": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "primary_keyword": {
+          "type": "string"
+        },
+        "secondary_keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "meta_title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "meta_description": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "search_intent": {
+          "enum": [
+            "informational",
+            "navigational",
+            "commercial",
+            "transactional"
+          ]
+        }
+      }
+    },
+    "needs_expert_review": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

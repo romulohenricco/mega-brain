@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:approval-decision:v1",
+  "title": "Approval Decision (decisão humana)",
+  "description": "Decisão do approval-owner (humano) sobre um approval-request. Somente decision == approved autoriza execução, e apenas com payload_sha256 idêntico ao do pedido e ao hash recalculado do payload a executar, com bound_to idêntico a gate/operation/destination/channel do pedido, dentro da validade. approved_with_edits NUNCA autoriza execução: o copy-publisher aplica as edições, abre a rodada seguinte ({gate}-r{n+1}) com novo payload_sha256 e o approval-owner confirma com approved. Escrito somente pelo humano (human-cli ou human-chat-confirmed); subagents nunca escrevem este artefato. Mapeamento de meta.status: approved -> approved; rejected -> rejected; approved_with_edits -> needs_approval.",
+  "type": "object",
+  "required": [
+    "meta",
+    "human_attested",
+    "recorded_via",
+    "approval_request_id",
+    "bound_to",
+    "decision",
+    "reviewer",
+    "decided_at",
+    "payload_sha256",
+    "expires_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/meta"
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "model"
+                ]
+              },
+              {
+                "required": [
+                  "prompt_version"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "description": "Decisão humana: meta.model e meta.prompt_version são proibidos, pois a decisão não pode ser produzida por modelo; meta.produced_by = approval-owner e meta.artifact_type = approval-decision (const). meta.status segue a decisão: approved -> approved; rejected -> rejected; approved_with_edits -> needs_approval."
+    },
+    "human_attested": {
+      "const": true,
+      "description": "Atestado de que a decisão foi tomada por um humano autorizado (reviewer consta na lista human_gates.approvers do config.yaml) e não por agente ou modelo."
+    },
+    "recorded_via": {
+      "enum": [
+        "human-cli",
+        "human-chat-confirmed"
+      ],
+      "description": "Meio pelo qual a decisão humana foi registrada: human-cli (humano roda approval_tools.py decide) ou human-chat-confirmed (sessão principal transcreve mensagem explícita do humano, citada literalmente em comments)."
+    },
+    "approval_request_id": {
+      "type": "string",
+      "description": "artifact_id do approval-request decidido"
+    },
+    "bound_to": {
+      "type": "object",
+      "required": [
+        "gate",
+        "operation",
+        "destination",
+        "channel"
+      ],
+      "additionalProperties": false,
+      "description": "Vínculo da decisão com o pedido: cópia (feita pelo approval_tools.py decide) de gate, operation, destination e channel do approval-request. O verify exige igualdade campo a campo com o pedido; qualquer divergência invalida a decisão.",
+      "properties": {
+        "gate": {
+          "enum": [
+            "G1",
+            "G2",
+            "G3",
+            "G4",
+            "G5",
+            "SAMPLING"
+          ]
+        },
+        "operation": {
+          "enum": [
+            "approve_brief",
+            "approve_angle",
+            "approve_claims",
+            "publish",
+            "send",
+            "run_ads",
+            "update_page",
+            "internal_use"
+          ]
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "decision": {
+      "enum": [
+        "approved",
+        "approved_with_edits",
+        "rejected"
+      ],
+      "description": "approved autoriza execução. approved_with_edits NÃO autoriza execução (D2): exige nova rodada com novo payload_sha256 e nova decisão approved. rejected encerra a rodada."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Identificador da pessoa responsável pela decisão; deve constar em human_gates.approvers do config.yaml para o {business}."
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 do payload decidido; deve ser igual ao payload_sha256 do approval-request e ao hash recalculado (método de approval-request.payload_sha256). Em approved_with_edits descreve o payload que o humano viu; o payload editado recebe novo hash na rodada seguinte."
+    },
+    "comments": {
+      "type": "string",
+      "description": "Comentários do humano. Em recorded_via == human-chat-confirmed, cita literalmente a mensagem do humano no chat."
+    },
+    "edits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "section",
+          "before",
+          "after",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Edições feitas pelo humano em approved_with_edits: objetos {section, before, after, reason}, todos obrigatórios."
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Janela de execução = decided_at + 72 h. Decisão expirada exige nova rodada; o preflight exige now < expires_at."
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "meta": {
+          "required": [
+            "produced_by",
+            "artifact_type"
+          ],
+          "properties": {
+            "produced_by": {
+              "const": "approval-owner"
+            },
+            "artifact_type": {
+              "const": "approval-decision"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "approved"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "meta": {
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "approved"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "rejected"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "meta": {
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "rejected"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "approved_with_edits"
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "meta": {
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "needs_approval"
+              }
+            }
+          }
+        },
+        "required": [
+          "edits"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recorded_via": {
+            "const": "human-chat-confirmed"
+          }
+        },
+        "required": [
+          "recorded_via"
+        ]
+      },
+      "then": {
+        "required": [
+          "comments"
+        ],
+        "properties": {
+          "comments": {
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

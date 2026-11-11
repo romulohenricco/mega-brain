@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "apd-exemplo",
+    "artifact_type": "approval-decision",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "approval-owner",
+    "produced_at": "2026-11-10T16:10:00-03:00",
+    "version": 1,
+    "status": "approved",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "approval_request_id": "apr-exemplo",
+  "bound_to": {
+    "gate": "G4",
+    "operation": "run_ads",
+    "destination": "anúncio pago, conjunto de teste A",
+    "channel": "paid_ads"
+  },
+  "decision": "approved",
+  "reviewer": "responsavel-oferta",
+  "decided_at": "2026-11-10T16:10:00-03:00",
+  "payload_sha256": "9efe6e6c0e35da6bbe1ab614a0a649c7a035ae3055680dd9f547804a101299f1",
+  "comments": "Mensagem do humano no chat (exemplo ilustrativo): \"Aprovado para veiculação nos termos do pedido.\"",
+  "edits": [],
+  "conditions": [],
+  "expires_at": "2026-11-13T16:10:00-03:00",
+  "human_attested": true,
+  "recorded_via": "human-chat-confirmed"
+}

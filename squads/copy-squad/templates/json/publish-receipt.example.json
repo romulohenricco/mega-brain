@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "pub-exemplo",
+    "artifact_type": "publish-receipt",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-publisher",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "asset_id": "cvc-anuncio",
+  "approval_decision_id": "apd-exemplo",
+  "payload_sha256": "9efe6e6c0e35da6bbe1ab614a0a649c7a035ae3055680dd9f547804a101299f1",
+  "destination": "anúncio pago, conjunto de teste A",
+  "channel": "paid_ads",
+  "executed_by": "human",
+  "executed_at": "2026-11-10T17:00:00-03:00",
+  "verification": {
+    "sha_match": true,
+    "approval_valid": true,
+    "not_expired": true,
+    "bound_match": true,
+    "verify_ok": true,
+    "counter_signed_by": "copy-chief",
+    "counter_signed_at": "2026-11-10T16:40:00-03:00"
+  },
+  "rollback_plan": "Pausar o anúncio no gerenciador e registrar o evento no journey log.",
+  "outcome": "handed_off"
+}

@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "brf-fluxo-caixa-001",
+    "artifact_type": "brief",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "brief-master",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.8,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ],
+    "sources": [
+      {
+        "title": "Entrevista interna de descoberta (exemplo ilustrativo)",
+        "locator": ".data/copy-squad/pme-financas-exemplo/_library/entrevista-exemplo.md",
+        "type": "internal",
+        "accessed_at": "2026-11-09",
+        "summary": "Resumo ilustrativo de uma conversa com o time comercial."
+      }
+    ]
+  },
+  "business_objective": "Preencher a primeira turma da mentoria com inscrições qualificadas",
+  "primary_kpi": "Taxa de conversão da página de vendas em inscrição",
+  "secondary_kpis": [
+    "Taxa de abertura da sequência",
+    "Custo por inscrição"
+  ],
+  "audience": {
+    "segment": "Donos de pequenas empresas de serviços",
+    "pain_points": [
+      "Não sabe quanto vai sobrar no fim do mês",
+      "Mistura contas pessoais e da empresa"
+    ],
+    "desires": [
+      "Previsibilidade de caixa",
+      "Decidir com números e não por intuição"
+    ],
+    "objections": [
+      "Não tenho tempo",
+      "Já tentei planilhas e desisti"
+    ],
+    "awareness_stage": "problem_aware"
+  },
+  "offer": {
+    "promise": "Organizar o fluxo de caixa da empresa em 8 semanas com acompanhamento",
+    "mechanism": "Método de rotina semanal de caixa com modelos prontos",
+    "proof": [
+      "Depoimentos autorizados (a coletar)"
+    ],
+    "price": "A definir pelo negócio",
+    "guarantee": "A definir pelo negócio",
+    "constraints": [
+      "Sem promessa de resultado financeiro"
+    ]
+  },
+  "channel": "Página de vendas e e-mail",
+  "formats": [
+    "landing_page",
+    "email"
+  ],
+  "tone_of_voice": "Direto, didático e acolhedor, sem jargão financeiro",
+  "must_include": [
+    "Chamada para inscrição",
+    "Resumo do conteúdo das 8 semanas"
+  ],
+  "must_avoid": [
+    "Escassez falsa",
+    "Promessas de enriquecimento"
+  ],
+  "acceptance_criteria": [
+    "Toda promessa tem prova ou está marcada como needs_approval",
+    "CTA único e claro por seção"
+  ],
+  "confirmed_facts": [
+    "A mentoria tem 8 semanas e formato em grupo"
+  ],
+  "hypotheses_to_validate": [
+    "A dor de previsibilidade converte mais que a dor de organização"
+  ],
+  "open_questions": [
+    "Preço e garantia"
+  ],
+  "deadline": "2026-12-05"
+}

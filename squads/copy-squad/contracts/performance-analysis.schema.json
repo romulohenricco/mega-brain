@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:performance-analysis:v1",
+  "title": "Performance Analysis (análise de desempenho e CRO)",
+  "description": "Leitura de métricas de um período (analysis_phase = result) ou planejamento de hipóteses e testes antes de haver resultado (analysis_phase = planning), com achados, significância declarada, hipóteses priorizadas (ICE) e separação epistêmica entre fatos, recomendações e hipóteses. Produzido pelo cro-analyst. Em result são obrigatórios asset_ids, period, metrics, sample_size, findings e winner_declared; em planning só hypotheses e next_actions (além de meta, analysis_phase e epistemic) e winner_declared, se presente, é false.",
+  "type": "object",
+  "required": [
+    "meta",
+    "analysis_phase",
+    "hypotheses",
+    "epistemic",
+    "next_actions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "analysis_phase": {
+      "enum": [
+        "planning",
+        "result"
+      ],
+      "description": "planning: tasks build-cro-hypotheses e design-ab-test (antes do teste). result: tasks analyze-performance e afins (com dados observados)."
+    },
+    "period": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "asset_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Métricas observadas (livre), ex.: impressions, clicks, ctr, conversions"
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Valores de referência"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Metas"
+    },
+    "sample_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "finding",
+          "evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "finding": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "statistical_note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "winner_declared": {
+      "type": "boolean"
+    },
+    "significance": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "type": "string"
+        },
+        "p_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "confidence_level": {
+          "type": "number"
+        },
+        "criterion": {
+          "type": "string"
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "hypothesis",
+          "variable",
+          "expected_effect",
+          "test_design",
+          "priority"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "hypothesis": {
+            "type": "string"
+          },
+          "variable": {
+            "type": "string"
+          },
+          "expected_effect": {
+            "type": "string"
+          },
+          "test_design": {
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "ice": {
+            "type": "object",
+            "required": [],
+            "additionalProperties": false,
+            "properties": {
+              "impact": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "confidence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "ease": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              }
+            }
+          }
+        }
+      }
+    },
+    "epistemic": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "analysis_phase": {
+            "const": "result"
+          }
+        },
+        "required": [
+          "analysis_phase"
+        ]
+      },
+      "then": {
+        "required": [
+          "asset_ids",
+          "period",
+          "metrics",
+          "sample_size",
+          "findings",
+          "winner_declared"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "analysis_phase": {
+            "const": "planning"
+          }
+        },
+        "required": [
+          "analysis_phase"
+        ]
+      },
+      "then": {
+        "properties": {
+          "winner_declared": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "vid-exemplo-v1",
+    "artifact_type": "video-script",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "video-social-scriptwriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "brief_id": "brf-exemplo",
+  "format": "reel",
+  "platform": "instagram",
+  "duration_seconds": 30,
+  "hook": "Hook de exemplo",
+  "script": [
+    {
+      "time": "0-3s",
+      "voiceover": "Locução de exemplo",
+      "on_screen_text": "Texto em tela",
+      "visual_direction": "Direção visual"
+    }
+  ],
+  "cta": "CTA de exemplo",
+  "caption": "Legenda de exemplo",
+  "variations": [],
+  "claims": []
+}

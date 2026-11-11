@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "rsp-fluxo-caixa-001-exemplo",
+    "artifact_type": "research-packet",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "research-analyst",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.6,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo de esqueleto; substitua pelos valores reais."
+    ],
+    "sources": [
+      {
+        "title": "Página pública do concorrente A (exemplo ilustrativo)",
+        "locator": "https://exemplo.com.br/concorrente-a",
+        "type": "secondary",
+        "accessed_at": "2026-11-09"
+      }
+    ]
+  },
+  "brief_id": "brf-fluxo-caixa-001",
+  "market_context": [
+    "Pequenas empresas costumam usar planilhas para o controle financeiro (observação ilustrativa)."
+  ],
+  "competitors": [
+    {
+      "name": "Concorrente A (exemplo ilustrativo)",
+      "positioning": "Curso gravado de finanças para empreendedores",
+      "claims": [
+        "Aprenda no seu ritmo"
+      ],
+      "source_url": "https://exemplo.com.br/concorrente-a",
+      "differentiator": "Conteúdo gravado e sem acompanhamento"
+    }
+  ],
+  "customer_language": [
+    "Tema recorrente: incerteza sobre se o caixa cobre o fim do mês (paráfrase, sem citação literal)"
+  ],
+  "objections": [
+    {
+      "objection": "Já tentei planilhas",
+      "evidence": [
+        "Relato ilustrativo"
+      ],
+      "response_angle": "Rotina guiada em vez de ferramenta solta"
+    }
+  ],
+  "proof_assets": [
+    "Modelo de caixa semanal"
+  ],
+  "facts": [
+    {
+      "statement": "A mentoria tem 8 semanas.",
+      "source": {
+        "title": "Entrevista interna de descoberta (exemplo ilustrativo)",
+        "locator": ".data/copy-squad/pme-financas-exemplo/_library/entrevista-exemplo.md",
+        "type": "internal",
+        "accessed_at": "2026-11-09",
+        "summary": "Resumo ilustrativo de uma conversa com o time comercial."
+      },
+      "status": "verified"
+    }
+  ],
+  "gaps": [
+    "Sem dados quantitativos de mercado"
+  ],
+  "confidence": 0.6
+}
