@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "eml-nutricao-mentoria-v1",
+    "artifact_type": "email-journey",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "email-crm-copywriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.77,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "objective": "Nutrir leads do material de fluxo de caixa e convidar para uma conversa de diagnóstico.",
+  "audience_segment": "Leads que baixaram o modelo de fluxo de caixa nos últimos 30 dias",
+  "consent_basis": "Consentimento explícito (opt-in) registrado no formulário de download, com finalidade informada; descadastro em todo e-mail (LGPD).",
+  "emails": [
+    {
+      "email_id": "eml-01",
+      "trigger": "download do modelo de fluxo de caixa",
+      "delay": "imediato",
+      "subject": "Seu modelo de fluxo de caixa chegou",
+      "preview_text": "Veja como usar em 10 minutos",
+      "body": "Olá, [nome]. Aqui está o modelo que você pediu. Comece preenchendo o saldo atual e as contas das próximas duas semanas.",
+      "cta": "Baixar o modelo",
+      "success_metric": "taxa de clique no download",
+      "segment_variations": [
+        "Quem tem equipe: destacar o controle de folha"
+      ],
+      "requires_approval": true
+    },
+    {
+      "email_id": "eml-02",
+      "trigger": "2 dias após eml-01",
+      "delay": "2 dias",
+      "subject": "O erro mais comum ao projetar o caixa",
+      "preview_text": "Misturar contas pessoais e da empresa",
+      "body": "Muitos negócios pequenos misturam retiradas pessoais com despesas. Defina uma retirada fixa e trate como saída do fluxo.",
+      "cta": "Ler o guia completo",
+      "success_metric": "taxa de clique no guia",
+      "requires_approval": true
+    },
+    {
+      "email_id": "eml-03",
+      "trigger": "5 dias após eml-01",
+      "delay": "5 dias",
+      "subject": "Quer revisar o seu fluxo com a gente?",
+      "preview_text": "Conversa de diagnóstico, sem compromisso",
+      "body": "Se quiser apoio para aplicar o modelo, agende uma conversa de diagnóstico. Condições da mentoria: [pendentes de aprovação].",
+      "cta": "Agendar conversa",
+      "success_metric": "agendamentos por e-mail enviado",
+      "requires_approval": true
+    }
+  ],
+  "exit_conditions": [
+    "Agendou a conversa de diagnóstico",
+    "Descadastrou-se",
+    "Respondeu o e-mail"
+  ],
+  "fallback_for_non_openers": "Reenviar eml-02 com novo assunto após 3 dias, uma única vez."
+}

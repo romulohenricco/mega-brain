@@ -1,0 +1,327 @@
+version: '1.0'
+squad: copy-squad
+generated_at: '2026-11-10'
+total_files: 6
+total_lines: 880
+total_tokens: 15943
+files:
+- path: copywriter-profession.md
+  lines: 141
+  tokens: 2914
+  hash: ccf22004448c
+  topics:
+  - copywriter
+  - profissão
+  - senioridade
+  - especialização
+  - competências
+  - carreira
+  - ia
+  sections:
+  - name: '# A profissão de copywriter'
+    lines: 1-4
+    tokens: 83
+  - name: '## 1. O que é um copywriter'
+    lines: 5-10
+    tokens: 133
+  - name: '## 2. O que ele faz no dia a dia'
+    lines: 11-24
+    tokens: 295
+  - name: '## 3. O núcleo da profissão: persuasão ética'
+    lines: 25-28
+    tokens: 71
+  - name: '### Competências centrais'
+    lines: 29-40
+    tokens: 269
+  - name: '## 4. Estruturas que ele usa'
+    lines: 41-51
+    tokens: 192
+  - name: '## 5. Graus de especialização'
+    lines: 52-65
+    tokens: 434
+  - name: '## 6. Especializações possíveis'
+    lines: 66-83
+    tokens: 457
+  - name: '## 7. Onde ele atua'
+    lines: 84-93
+    tokens: 147
+  - name: '## 8. Como entrar e evoluir'
+    lines: 94-105
+    tokens: 227
+  - name: '## 9. Como a IA muda a função'
+    lines: 106-111
+    tokens: 180
+  - name: '## 10. Sinais de um copywriter sênior'
+    lines: 112-123
+    tokens: 126
+  - name: '### Como esses sinais viram critérios no squad'
+    lines: 124-135
+    tokens: 212
+  - name: '## 11. Leitura recomendada dentro do squad'
+    lines: 136-141
+    tokens: 80
+- path: squad-operating-model.md
+  lines: 203
+  tokens: 3379
+  hash: a3f264aa4830
+  topics:
+  - organograma
+  - núcleos
+  - fluxo
+  - governança
+  - workflows
+  - consolidação
+  - persistência
+  sections:
+  - name: '# Modelo operacional do Copy Squad'
+    lines: 1-4
+    tokens: 71
+  - name: '## 1. Princípios'
+    lines: 5-13
+    tokens: 186
+  - name: '## 2. Organograma'
+    lines: 14-39
+    tokens: 408
+  - name: '## 3. Núcleos e papéis'
+    lines: 40-41
+    tokens: 5
+  - name: '### Comando'
+    lines: 42-48
+    tokens: 126
+  - name: '### Estratégia'
+    lines: 49-57
+    tokens: 148
+  - name: '### Produção'
+    lines: 58-70
+    tokens: 236
+  - name: '### Qualidade'
+    lines: 71-78
+    tokens: 91
+  - name: '### Inteligência'
+    lines: 79-85
+    tokens: 86
+  - name: '### Operação'
+    lines: 86-91
+    tokens: 99
+  - name: '## 4. Fluxo de produção padrão'
+    lines: 92-135
+    tokens: 431
+  - name: '### Executores dos quality gates (D7)'
+    lines: 136-155
+    tokens: 360
+  - name: '## 5. Workflows'
+    lines: 156-165
+    tokens: 129
+  - name: '## 6. Modos de operação'
+    lines: 166-171
+    tokens: 250
+  - name: '## 7. Regras de governança'
+    lines: 172-186
+    tokens: 379
+  - name: '## 8. Consolidações em relação à pesquisa original'
+    lines: 187-200
+    tokens: 271
+  - name: '## 9. Persistência'
+    lines: 201-203
+    tokens: 93
+- path: human-in-the-loop.md
+  lines: 172
+  tokens: 4054
+  hash: fde90e1f1bd1
+  topics:
+  - aprovação
+  - gates
+  - risco
+  - payload
+  - sha256
+  - humano
+  - sla
+  sections:
+  - name: '# Integração humana (Human-in-the-Loop)'
+    lines: 1-4
+    tokens: 67
+  - name: '## 1. Três níveis de aprovação'
+    lines: 5-21
+    tokens: 445
+  - name: '## 2. Pontos obrigatórios de humano'
+    lines: 22-43
+    tokens: 569
+  - name: '## 3. Fluxo de aprovação'
+    lines: 44-75
+    tokens: 377
+  - name: '## 4. Conteúdo do pacote de aprovação'
+    lines: 76-106
+    tokens: 645
+  - name: '## 5. Payload imutável'
+    lines: 107-118
+    tokens: 710
+  - name: '## 6. Como o humano decide'
+    lines: 119-126
+    tokens: 163
+  - name: '### Como o humano registra a decisão (D4)'
+    lines: 127-141
+    tokens: 448
+  - name: '## 7. SLA e expiração'
+    lines: 142-148
+    tokens: 247
+  - name: '## 8. Cadência de operação com humanos'
+    lines: 149-157
+    tokens: 110
+  - name: '## 9. Anti-padrões'
+    lines: 158-172
+    tokens: 266
+- path: metrics-and-evaluation.md
+  lines: 88
+  tokens: 1986
+  hash: 68672c52162a
+  topics:
+  - métricas
+  - avaliação
+  - quality-gates
+  - telemetria
+  - cro
+  - estatística
+  - cadência
+  sections:
+  - name: '# Métricas e avaliação dos agentes'
+    lines: 1-4
+    tokens: 92
+  - name: '## 1. As três camadas'
+    lines: 5-14
+    tokens: 171
+  - name: '## 2. Métricas por agente'
+    lines: 15-37
+    tokens: 746
+  - name: '## 3. Métricas autônomas (comuns a todos os agentes)'
+    lines: 38-50
+    tokens: 174
+  - name: '## 4. Quality gates automáticos'
+    lines: 51-56
+    tokens: 192
+  - name: '## 5. Rigor estatístico (cro-analyst)'
+    lines: 57-68
+    tokens: 269
+  - name: '## 6. Cadência'
+    lines: 69-79
+    tokens: 178
+  - name: '## 7. Telemetria'
+    lines: 80-85
+    tokens: 83
+  - name: '## 8. Indicador principal'
+    lines: 86-88
+    tokens: 75
+- path: ethical-persuasion.md
+  lines: 101
+  tokens: 1581
+  hash: 5118cfa608b1
+  topics:
+  - persuasão
+  - ética
+  - urgência
+  - escassez
+  - autoridade
+  - prova
+  - claims
+  sections:
+  - name: '# Persuasão ética'
+    lines: 1-4
+    tokens: 33
+  - name: '## 1. Definição operacional'
+    lines: 5-16
+    tokens: 164
+  - name: '## 2. Regras do squad'
+    lines: 17-29
+    tokens: 493
+  - name: '## 3. Urgência e escassez'
+    lines: 30-31
+    tokens: 6
+  - name: '### Legítimas'
+    lines: 32-38
+    tokens: 106
+  - name: '### Falsas'
+    lines: 39-46
+    tokens: 67
+  - name: '## 4. Autoridade e prova'
+    lines: 47-48
+    tokens: 6
+  - name: '### Legítimas'
+    lines: 49-55
+    tokens: 80
+  - name: '### Falsas'
+    lines: 56-63
+    tokens: 73
+  - name: '## 5. Promessas'
+    lines: 64-74
+    tokens: 124
+  - name: '## 6. Linguagem e vulnerabilidade'
+    lines: 75-81
+    tokens: 93
+  - name: '## 7. Como o squad aplica'
+    lines: 82-92
+    tokens: 211
+  - name: '## 8. Teste rápido antes de enviar'
+    lines: 93-101
+    tokens: 116
+- path: copy-frameworks.md
+  lines: 175
+  tokens: 2029
+  hash: a3a9153e63fc
+  topics:
+  - aida
+  - pas
+  - bab
+  - 4u
+  - pastor
+  - quest
+  - consciência
+  - sofisticação
+  - jtbd
+  sections:
+  - name: '# Frameworks de copy'
+    lines: 1-4
+    tokens: 71
+  - name: '## 1. Quadro de escolha rápida'
+    lines: 5-21
+    tokens: 307
+  - name: '## 2. AIDA'
+    lines: 22-32
+    tokens: 113
+  - name: '## 3. PAS'
+    lines: 33-42
+    tokens: 113
+  - name: '## 4. BAB'
+    lines: 43-52
+    tokens: 83
+  - name: '## 5. Característica, vantagem, benefício (FAB)'
+    lines: 53-63
+    tokens: 133
+  - name: '## 6. 4U'
+    lines: 64-74
+    tokens: 99
+  - name: '## 7. PASTOR'
+    lines: 75-89
+    tokens: 163
+  - name: '## 8. QUEST'
+    lines: 90-101
+    tokens: 82
+  - name: '## 9. Níveis de consciência do mercado'
+    lines: 102-115
+    tokens: 194
+  - name: '## 10. Estágios de sofisticação do mercado'
+    lines: 116-127
+    tokens: 172
+  - name: '## 11. Jobs to be done (JTBD)'
+    lines: 128-137
+    tokens: 119
+  - name: '## 12. Messaging house'
+    lines: 138-148
+    tokens: 94
+  - name: '## 13. Proposta de valor'
+    lines: 149-158
+    tokens: 100
+  - name: '## 14. Combinando frameworks'
+    lines: 159-168
+    tokens: 96
+  - name: '## 15. Anti-padrões'
+    lines: 169-175
+    tokens: 80

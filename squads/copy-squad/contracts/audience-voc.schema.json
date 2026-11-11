@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:audience-voc:v1",
+  "title": "Público e Voz do Cliente",
+  "description": "Mapa do público e da voz do cliente: dores com intensidade, desejos, objeções categorizadas, crenças, frases reais com fonte e lacunas de evidência.",
+  "type": "object",
+  "required": [
+    "meta",
+    "segment",
+    "pain_points",
+    "objections",
+    "awareness_stage"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "segment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "icp": {
+      "type": "string"
+    },
+    "jobs_to_be_done": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pain_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pain": {
+            "type": "string",
+            "minLength": 1
+          },
+          "intensity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "pain"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "desires": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "objections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objection": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": [
+              "price",
+              "trust",
+              "complexity",
+              "risk",
+              "time",
+              "compatibility",
+              "need",
+              "other"
+            ]
+          },
+          "frequency": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "objection",
+          "category"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "beliefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "customer_phrases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phrase": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "context": {
+            "type": "string"
+          },
+          "anonymized": {
+            "const": true,
+            "description": "Frase sem dados pessoais nem detalhes que permitam reidentificar o cliente."
+          },
+          "reuse": {
+            "enum": [
+              "internal_only",
+              "adapt_only",
+              "quote_with_rights"
+            ],
+            "description": "internal_only: só insumo interno; adapt_only: usar a linguagem de forma adaptada, nunca como citação atribuída; quote_with_rights: citação só com usage_rights granted e G3."
+          },
+          "usage_rights": {
+            "enum": [
+              "granted",
+              "pending",
+              "unknown"
+            ],
+            "description": "Direito de uso da frase. Obrigatório quando reuse == quote_with_rights; só 'granted' autoriza citação literal em copy pública (e ainda passa por G3)."
+          }
+        },
+        "required": [
+          "phrase",
+          "source",
+          "anonymized",
+          "reuse"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "reuse": {
+                  "const": "quote_with_rights"
+                }
+              },
+              "required": [
+                "reuse"
+              ]
+            },
+            "then": {
+              "required": [
+                "usage_rights"
+              ]
+            }
+          }
+        ]
+      },
+      "description": "Frases reais de clientes, anonimizadas (anonymized: true), como inspiração de linguagem. Citar literalmente em copy pública exige reuse == quote_with_rights, depoimento autorizado (usage_rights granted) e G3."
+    },
+    "awareness_stage": {
+      "enum": [
+        "unaware",
+        "problem_aware",
+        "solution_aware",
+        "product_aware",
+        "most_aware"
+      ]
+    },
+    "sources_analyzed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "usage_basis": {
+      "enum": [
+        "consent",
+        "legitimate_interest",
+        "internal_data"
+      ],
+      "description": "Base de uso dos dados de cliente (LGPD): consentimento, legítimo interesse ou dado interno do negócio."
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "customer_phrases"
+        ],
+        "properties": {
+          "customer_phrases": {
+            "minItems": 1
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "usage_basis"
+        ]
+      }
+    }
+  ]
+}

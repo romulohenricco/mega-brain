@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "lrn-garantia-perto-cta",
+    "artifact_type": "learning-record",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "knowledge-curator",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.6,
+    "risk_level": "low",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "origin": "human_correction",
+  "hypothesis": "Garantia visível reduz a objeção de risco",
+  "variation": "Bloco de garantia ao lado do CTA principal",
+  "metric": "conversion_rate",
+  "result": "Aprovador corrigiu a copy: a garantia citada sem prazo foi reescrita com o prazo oficial da oferta.",
+  "decision": "Nunca citar garantia sem prazo e termos confirmados no offer-canvas.",
+  "next_action": "Validar em teste A/B a posição do bloco de garantia",
+  "applies_to": {
+    "offer": "mentoria de gestão financeira",
+    "audience": "donos de pequenas empresas",
+    "channel": "landing_page",
+    "format": "landing_page"
+  },
+  "reference_example": {
+    "before": "Garantia total, sem riscos.",
+    "after": "Garantia de 7 dias, conforme os termos da oferta (exemplo ilustrativo).",
+    "reason": "Evita promessa absoluta e cita termos verificáveis."
+  },
+  "learning_status": "approved",
+  "review_after": "2027-02-10"
+}

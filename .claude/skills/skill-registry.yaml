@@ -3,8 +3,8 @@
 # Last updated: 2026-03-31
 
 registry:
-  total_skills: 170
-  last_updated: "2026-06-30"
+  total_skills: 187
+  last_updated: "2026-11-10"
   generated_by: "SKILL.md frontmatter scan (automated) + manual additions of design-related skills + repo-hygiene"
 
 skills:
@@ -1539,11 +1539,164 @@ skills:
     user_invocable: true
     path: ".claude/skills/search-capabilities/SKILL.md"
     status: "active"
+  - name: "copy-squad"
+    version: "1.0.0"
+    description: "Porta de entrada do squad de copy: ativa o copy-chief, qualifica a demanda, escolhe o workflow e conduz a produção com gates humanos."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-squad/SKILL.md"
+    status: "active"
+  - name: "copy-briefing-master"
+    version: "1.0.0"
+    description: "Cria e consolida o brief operacional de copy (objetivo, KPI, público, oferta, restrições e critérios de aceite), separando fatos de hipóteses."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-briefing-master/SKILL.md"
+    status: "active"
+  - name: "copy-voc-extractor"
+    version: "1.0.0"
+    description: "Extrai a voz do cliente de material fornecido (vendas, suporte, comentários, pesquisas, entrevistas): frases literais anonimizadas com fonte, dores, desejos e objeções por frequência."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-voc-extractor/SKILL.md"
+    status: "active"
+  - name: "copy-competitive-angle-finder"
+    version: "1.0.0"
+    description: "Analisa concorrentes e substitutos, mapeia ângulos, promessas e saturação do mercado e aponta espaços livres, sem copiar texto e sem tratar claims de terceiros como fato."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-competitive-angle-finder/SKILL.md"
+    status: "active"
+  - name: "copy-hook-generator"
+    version: "1.0.0"
+    description: "Gera 20+ ângulos e hooks ranqueados a partir do brief e do research packet, sem promessas sem prova."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-hook-generator/SKILL.md"
+    status: "active"
+  - name: "copy-objection-handler"
+    version: "1.0.0"
+    description: "Mapeia objeções do comprador por categoria e frequência e cria respostas ancoradas em prova, mecanismo ou redução de risco, sem promessas novas."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-objection-handler/SKILL.md"
+    status: "active"
+  - name: "copy-proof-builder"
+    version: "1.0.0"
+    description: "Organiza depoimentos, cases, dados, demonstrações e garantias em uma pilha de provas verificada, com direito de uso e lacunas explícitas."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-proof-builder/SKILL.md"
+    status: "active"
+  - name: "copy-cta-optimizer"
+    version: "1.0.0"
+    description: "Cria e reescreve CTAs alinhados à intenção, ao estágio do funil e ao canal, com variações testáveis e hipótese."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-cta-optimizer/SKILL.md"
+    status: "active"
+  - name: "copy-landing-page-architect"
+    version: "1.0.0"
+    description: "Estrutura e escreve landing pages e páginas de vendas por seções (hero, problema, mecanismo, prova, oferta, FAQ, CTA) usando apenas fatos e provas verificados."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-landing-page-architect/SKILL.md"
+    status: "active"
+  - name: "copy-email-sequence-builder"
+    version: "1.0.0"
+    description: "Constrói jornadas de e-mail por objetivo (boas-vindas, nutrição, venda, reativação, carrinho abandonado, retenção) com consentimento, métrica por e-mail e aprovação humana."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-email-sequence-builder/SKILL.md"
+    status: "active"
+  - name: "copy-ad-variation-generator"
+    version: "1.0.0"
+    description: "Gera variações de headline, corpo e CTA de anúncio para teste, com hipótese por variação e respeito aos limites de caracteres do canal."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-ad-variation-generator/SKILL.md"
+    status: "active"
+  - name: "copy-script-writer"
+    version: "1.0.0"
+    description: "Escreve roteiros de Reels, YouTube, VSL, webinar e anúncio em vídeo com hook nos 3 primeiros segundos, retenção, prova, CTA único e variações para teste."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-script-writer/SKILL.md"
+    status: "active"
+  - name: "copy-concision-editor"
+    version: "1.0.0"
+    description: "Corta 20% a 40% de um texto de copy sem perder o argumento, preservando claims, números, fontes e CTA, com log de mudanças e relatório de edição."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-concision-editor/SKILL.md"
+    status: "active"
+  - name: "copy-fact-checker"
+    version: "1.0.0"
+    description: "Verifica cada claim de uma peça de copy contra fonte, marca unverified o que não tem evidência e sinaliza promessas, depoimentos, comparações e riscos de conformidade."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-fact-checker/SKILL.md"
+    status: "active"
+  - name: "copy-brand-voice-check"
+    version: "1.0.0"
+    description: "Revisa se uma peça segue o guia de voz do negócio, com score 0-100, desvios por severidade e reescritas mínimas que preservam fatos e claims."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-brand-voice-check/SKILL.md"
+    status: "active"
+  - name: "copy-cro-hypothesis-builder"
+    version: "1.0.0"
+    description: "Transforma resultados de performance de copy em hipóteses de CRO testáveis, de variável única, priorizadas por ICE, sem declarar vencedor sem critério."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-cro-hypothesis-builder/SKILL.md"
+    status: "active"
+  - name: "copy-repurposing-engine"
+    version: "1.0.0"
+    description: "Transforma um ativo longo aprovado em um sistema de derivados (posts, carrosséis, newsletters, e-mails, anúncios, roteiros), sem duplicar conteúdo e sem criar dado novo."
+    owner_squad: "copy-squad"
+    megabrain_tier: "Tier1"
+    context: "conversation"
+    user_invocable: true
+    path: ".claude/skills/copy-repurposing-engine/SKILL.md"
+    status: "active"
 
 compliance:
-  with_frontmatter: 124
+  with_frontmatter: 141
   without_frontmatter: 38
-  with_owner: 9
+  with_owner: 26
   without_owner: 153
-  with_version: 36
+  with_version: 53
   without_version: 126

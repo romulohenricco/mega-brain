@@ -1,0 +1,322 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Layout de persistência do Copy Squad em filesystem: onde cada artefato vive,
+    regras de nome, versão, imutabilidade e retenção, e o catálogo de eventos do
+    journey log (Art. IX). O filesystem é a fonte de verdade; qualquer banco
+    (docs/database-proposal.md) é espelho derivado.
+  created_at: "2026-11-10"
+  source_of_truth: filesystem
+  governance: "Alinhado ao ADR-001 (docs/governance-decisions.md), que prevalece em caso de conflito."
+
+roots:
+  runtime: ".data/copy-squad/{business}/{campaign_id}/"
+  library: ".data/copy-squad/{business}/_library/"
+  brand: ".data/copy-squad/{business}/_brand/"
+  telemetry: ".data/copy-squad/{business}/_telemetry/"
+  journey_log: ".data/logs/journey/lifecycle-events.jsonl"
+  workspace_read_only:
+    - "workspace/businesses/{business}/L0-identity/"
+    - "workspace/businesses/{business}/L1-strategy/"
+    - "workspace/businesses/{business}/L2-tactical/"
+  gitignore: ".data/ é gitignorado; nada de runtime entra no repositório."
+  isolation: "Cada {business} tem árvore própria, inclusive a telemetria (_telemetry); nenhum agente lê ou escreve na árvore de outro negócio."
+
+layout: |
+  .data/copy-squad/
+  └── {business}/
+      ├── _telemetry/
+      │   ├── agent-runs.jsonl              # contracts/agent-run (1 linha por execução)
+      │   └── agent-evaluations.jsonl       # contracts/agent-evaluation
+      ├── _brand/
+      │   └── brand-voice-guide.json        # contracts/brand-voice-guide (versão vigente)
+      ├── _library/                         # ativos aprovados, provas, ângulos vencedores, aprendizados
+      │   ├── index.jsonl                   # 1 linha por ativo ou entrada (knowledge-curator); campos em library_index
+      │   ├── assets/{asset_id}/            # cópia da versão aprovada ou publicada (v{n}.json)
+      │   ├── proofs/                       # provas e depoimentos com usage_rights
+      │   ├── angles/                       # ângulos vencedores e reprovados com motivo
+      │   ├── learnings/{lrn-id}.json       # contracts/learning-record
+      │   └── queries/knowledge-query-{n}.json   # contracts/knowledge-query-result sem campanha
+      └── {campaign_id}/
+          ├── handoffs.jsonl                # contracts/handoff-envelope (append-only)
+          ├── 00-intake/
+          │   ├── demand-intake.json        # contracts/demand-intake
+          │   ├── execution-plan.json       # contracts/execution-plan
+          │   └── knowledge-query-{n}.json  # contracts/knowledge-query-result (consulta feita com campanha)
+          ├── 01-strategy/
+          │   ├── brief.json                # contracts/brief (+ brief.md renderizado do template)
+          │   ├── audience-voc.json         # contracts/audience-voc
+          │   └── offer-canvas.json         # contracts/offer-canvas
+          ├── 02-research/
+          │   └── research-packet.json
+          ├── 03-angles/
+          │   └── angles.json
+          ├── 04-drafts/
+          │   └── {asset_id}/
+          │       ├── v{n}.json             # conversion-copy | content-piece | ux-copy | video-script | email-journey
+          │       └── changelog.jsonl       # append-only (copy-publisher)
+          ├── 05-review/
+          │   └── {asset_id}/
+          │       ├── edit-report-v{n}.json         # {tipo}-v{n}: n = versão exata do draft avaliado (D14)
+          │       ├── brand-review-v{n}.json
+          │       ├── compliance-review-v{n}.json
+          │       └── localization-{locale}-v{n}.json
+          ├── 06-approval/
+          │   ├── {asset_id}/
+          │   │   ├── {gate}-r{n}/          # G3 de texto e G4: uma pasta por gate e rodada (ex.: g4-r1, g3-r1, g4-r2)
+          │   │   │   ├── approval-request.json     # escrito só pelo copy-publisher (D5)
+          │   │   │   ├── payload.json              # = approval-request.payload, JSON canônico D1; é o que se aprova e executa (E8)
+          │   │   │   └── approval-decision.json    # escrito só pelo humano (D4)
+          │   │   └── sampling-r{n}/        # amostragem de risco low (gate SAMPLING, operation internal_use)
+          │   │       ├── approval-request.json
+          │   │       ├── payload.json
+          │   │       └── approval-decision.json
+          │   └── _campaign/
+          │       └── {gate}-r{n}/          # G1, G2 e G3 de oferta: pedidos de nível campanha (g1-r1, g2-r1, g3-r1)
+          │           ├── approval-request.json
+          │           ├── payload.json
+          │           └── approval-decision.json
+          ├── 07-published/
+          │   └── {asset_id}/publish-receipt.json
+          └── 08-performance/
+              └── performance-analysis-{yyyymmdd}-{n}.json
+
+directories:
+  - {path: "{business}/_telemetry/agent-runs.jsonl",     contract: agent-run,             writer: "todo agente (via wrapper de execução)", mode: append_only}
+  - {path: "{business}/_telemetry/agent-evaluations.jsonl", contract: agent-evaluation,      writer: "copy-chief | approval-owner | script", mode: append_only, note: "Cada linha traz o campo business (slug do {business} da execução); o isolamento por negócio vale também para a avaliação"}
+  - {path: "{business}/_brand/brand-voice-guide.json", contract: brand-voice-guide,     writer: brand-voice-guardian, mode: versioned, note: "Nova versão aprovada substitui a vigente; versões anteriores preservadas em _brand/history/"}
+  - {path: "{business}/_library/index.jsonl",          contract: "(índice, 1 linha por ativo ou entrada; campos em library_index)", writer: knowledge-curator, mode: append_only_with_status_updates, note: "Mudança de status = nova linha com mesmo asset_id e version maior"}
+  - {path: "{business}/_library/queries/knowledge-query-{n}.json", contract: knowledge-query-result, writer: knowledge-curator, mode: immutable_versions, note: "Consulta sem campanha (D14); n sequencial por negócio"}
+  - {path: "{business}/_library/learnings/{lrn-id}.json", contract: learning-record,   writer: knowledge-curator, mode: immutable_after_approved}
+  - {path: "{campaign_id}/handoffs.jsonl",             contract: handoff-envelope,     writer: "agente emissor", mode: append_only}
+  - {path: "{campaign_id}/00-intake/demand-intake.json", contract: demand-intake,      writer: copy-chief, mode: versioned}
+  - {path: "{campaign_id}/00-intake/execution-plan.json", contract: execution-plan,    writer: copy-chief, mode: versioned}
+  - {path: "{campaign_id}/01-strategy/brief.json",     contract: brief,                writer: brief-master, mode: versioned, note: "v1 rascunho, vN consolidado; brief.md é render do template, não fonte"}
+  - {path: "{campaign_id}/01-strategy/audience-voc.json", contract: audience-voc,       writer: audience-voc, mode: versioned}
+  - {path: "{campaign_id}/01-strategy/offer-canvas.json", contract: offer-canvas,       writer: offer-strategist, mode: versioned}
+  - {path: "{campaign_id}/00-intake/knowledge-query-{n}.json", contract: knowledge-query-result, writer: knowledge-curator, mode: immutable_versions, note: "Consulta feita dentro de uma campanha; sem campanha o resultado vai para {business}/_library/queries/"}
+  - {path: "{campaign_id}/02-research/research-packet.json", contract: research-packet, writer: research-analyst, mode: versioned}
+  - {path: "{campaign_id}/03-angles/angles.json",      contract: angles,               writer: hook-angle-creator, mode: versioned}
+  - {path: "{campaign_id}/04-drafts/{asset_id}/v{n}.json", contract: "conversion-copy | content-piece | ux-copy | video-script | email-journey", writer: "copywriter dono do ativo", mode: immutable_versions}
+  - {path: "{campaign_id}/04-drafts/{asset_id}/changelog.jsonl", contract: "(log de versões: versão, autor, motivo, hash)", writer: copy-publisher, mode: append_only}
+  - {path: "{campaign_id}/05-review/{asset_id}/edit-report-v{n}.json", contract: edit-report, writer: copy-editor, mode: immutable_versions, note: "n = versão exata do draft avaliado (meta.artifact_id = {asset_id}-v{n}); nova versão do draft gera nova revisão, nunca sobrescreve"}
+  - {path: "{campaign_id}/05-review/{asset_id}/brand-review-v{n}.json", contract: brand-review, writer: brand-voice-guardian, mode: immutable_versions}
+  - {path: "{campaign_id}/05-review/{asset_id}/compliance-review-v{n}.json", contract: compliance-review, writer: compliance-checker, mode: immutable_versions}
+  - {path: "{campaign_id}/05-review/{asset_id}/localization-{locale}-v{n}.json", contract: localization, writer: localization-specialist, mode: immutable_versions}
+  - {path: "{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-request.json", contract: approval-request, writer: copy-publisher, mode: immutable_after_decision, note: "Único produtor: copy-publisher (D5), via prepare-approval-package; G3 de texto e G4; pasta de rodada em minúsculas (g3-r1, g4-r2). Uma pasta por gate e rodada; payload divergente, decisão expirada ou approved_with_edits abrem a rodada seguinte (D2, D3)"}
+  - {path: "{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-decision.json", contract: approval-decision, writer: "approval-owner (humano; recorded_via human-cli ou human-chat-confirmed)", mode: immutable, note: "A decisão vive na mesma pasta de rodada do pedido (E3) e traz bound_to = {gate, operation, destination, channel} (E1). Subagents nunca escrevem approval-decision (D4). Decisão vigente = a da maior rodada n do gate; revogação é nova decisão rejected na rodada seguinte"}
+  - {path: "{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/payload.json", contract: approval-request-payload, writer: copy-publisher, mode: immutable_after_decision, note: "E8: cópia exata de approval-request.payload em JSON canônico (D1), gravada por prepare-approval-package na pasta da rodada. É o arquivo passado a approval_tools.py verify --for-execution --payload e o que a execução usa (nunca o draft 04-drafts/.../v{n}.json). content-hash do arquivo = payload_sha256"}
+  - {path: "{campaign_id}/06-approval/{asset_id}/sampling-r{n}/payload.json", contract: approval-request-payload, writer: copy-publisher, mode: immutable_after_decision, note: "Amostragem: mesmo princípio do payload.json de rodada (E8)"}
+  - {path: "{campaign_id}/06-approval/_campaign/{gate}-r{n}/payload.json", contract: approval-request-payload, writer: copy-publisher, mode: immutable_after_decision, note: "Gates de campanha: mesmo princípio do payload.json de rodada (E8)"}
+  - {path: "{campaign_id}/06-approval/{asset_id}/sampling-r{n}/approval-request.json", contract: approval-request, writer: copy-publisher, mode: immutable_after_decision, note: "Amostragem de risco low: gate SAMPLING, operation internal_use (D5); nunca autoriza ação externa"}
+  - {path: "{campaign_id}/06-approval/{asset_id}/sampling-r{n}/approval-decision.json", contract: approval-decision, writer: "approval-owner (humano)", mode: immutable}
+  - {path: "{campaign_id}/06-approval/_campaign/{gate}-r{n}/approval-request.json", contract: approval-request, writer: copy-publisher, mode: immutable_after_decision, note: "Gates de nível campanha: G1 (approve_brief), G2 (approve_angle) e G3 de oferta (approve_claims); asset_id = campaign_id e channel internal (E3); pasta de rodada sempre em minúsculas (g1-r1, g2-r1, g3-r1)"}
+  - {path: "{campaign_id}/06-approval/_campaign/{gate}-r{n}/approval-decision.json", contract: approval-decision, writer: "approval-owner (humano)", mode: immutable}
+  - {path: "{campaign_id}/07-published/{asset_id}/publish-receipt.json", contract: publish-receipt, writer: copy-publisher, mode: immutable}
+  - {path: "{campaign_id}/08-performance/performance-analysis-{yyyymmdd}-{n}.json", contract: performance-analysis, writer: cro-analyst, mode: immutable_versions, note: "Cada versão é imutável; nova análise no mesmo dia incrementa n"}
+
+naming:
+  business: {pattern: "^[a-z0-9]+(-[a-z0-9]+)*$", example: "empresa-exemplo"}
+  campaign_id: {pattern: "^camp-[a-z0-9]+(-[a-z0-9]+)*$", example: "camp-lancamento-mentoria-2026-q4", note: "Exemplo ilustrativo"}
+  asset_id: {pattern: "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$", rule: "Usa o prefixo do contrato do ativo (cvc, cnt, uxc, vid, eml). É estável entre versões e NÃO contém versão: a versão fica em v{n}.json e em meta.version. Sufixos como -v2 não entram no asset_id (D14). Exceção (E3): nos gates de nível campanha (G1, G2, G3 de oferta) o approval-request e as chaves de idempotência usam asset_id = campaign_id e a pasta 06-approval/_campaign/.", example: "cvc-lp-mentoria"}
+  gate_round: {pattern: "^(g[1-4]|sampling)-r[1-9][0-9]*$", example: "g4-r2", note: "Pasta de aprovação: gate em minúsculas (g1 a g4 ou sampling) e rodada n sequencial por gate; o campo gate do approval-request aceita G1 a G4 e SAMPLING"}
+  idempotency_key: {pattern: "^camp-[a-z0-9]+(-[a-z0-9]+)*:[a-z0-9]+(-[a-z0-9]+)*:(g[1-4]|sampling):r[1-9][0-9]*:[0-9a-f]{12}$", example: "camp-lancamento-mentoria-2026-q4:cvc-lp-mentoria:g4:r1:ee95da7e2920", note: "{campaign_id}:{asset_id}:{gate em minúsculas}:r{n}:{12 primeiros hex do payload_sha256} (E3, token IDEMPOTENCY_KEY_PATTERN); exemplo ilustrativo"}
+  proof_id: {pattern: "^prv-[a-z0-9]+(-[a-z0-9]+)*$", example: "prv-depoimento-01", note: "Prefixo prv- para provas (token PROOF_ID_PREFIX); o prf- é de performance-analysis (E3); exemplo ilustrativo"}
+  artifact_id: {pattern: "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$", rule: "Prefixo do contrato (token ARTIFACT_ID_PREFIXES). Draft: meta.artifact_id = {asset_id}-v{n} (D14).", example: "cvc-lp-mentoria-v2"}
+  run_id: {pattern: "^run-", example: "run-20261110-0001"}
+  evaluation_id: {pattern: "^evl-", example: "evl-20261110-0001"}
+  envelope_id: {pattern: "^env-", example: "env-20261110-0001"}
+  learning_id: {pattern: "^lrn-[a-z0-9]+(-[a-z0-9]+)*$", example: "lrn-headline-especifica-venceu"}
+  locale_suffix: {note: "idioma de 2-3 letras, subtag opcional de script/região (es-419, zh-Hans) e região opcional", pattern: "^[a-z]{2,3}(-[A-Za-z0-9]{2,4})?(-[A-Z]{2})?$", example: "en-US"}
+  date_suffix: {pattern: "^[0-9]{8}$", example: "20261110", note: "yyyymmdd em performance-analysis, seguido de -{n}"}
+  review_file: {pattern: "{tipo}-v{n}.json", example: "compliance-review-v2.json", note: "tipo = edit-report | brand-review | compliance-review | localization-{locale}; n = versão exata do draft avaliado"}
+  rules:
+    - "Tudo em minúsculas e kebab-case, sem acentos nem espaços em nomes de arquivo e pasta."
+    - "Extensão .json para contratos; .jsonl para logs append-only; .md somente para render de templates (brief.md)."
+    - "O nome do arquivo reflete o contrato; nunca guardar dois contratos no mesmo arquivo."
+    - "O changelog é sempre changelog.jsonl (minúsculas), nunca CHANGELOG.jsonl."
+
+versioning:
+  draft_versions: "04-drafts/{asset_id}/v1.json, v2.json, ... Cada nova revisão do texto gera uma nova versão; nunca se sobrescreve."
+  meta_version: "meta.version (inteiro >= 1) acompanha o número da versão do arquivo."
+  other_artifacts: "Artefatos de estratégia (brief, audience-voc, offer-canvas, research-packet, angles) guardam versões anteriores em subpasta _history/ do mesmo diretório antes de a vigente ser substituída; meta.version sobe."
+  review_versions: "Artefatos de 05-review/{asset_id}/ são gravados como {tipo}-v{n}.json, onde n é a versão exata do draft avaliado (D14); cada arquivo é imutável e nova versão do draft gera nova revisão. Em 08-performance cada análise é um arquivo próprio performance-analysis-{yyyymmdd}-{n}.json, imutável. Nunca se sobrescreve."
+  review_binding: "Cada artefato de 05-review/{asset_id}/ referencia o meta.artifact_id do draft avaliado, incluindo a versão (ex.: cvc-lp-mentoria-v2), nos campos original_copy_id / text_id / copy_id / source_copy_id. O asset_id continua estável e sem versão. approval-request.asset_id = asset_id estável; o payload inclui a versão (D14). A revisão é refeita quando houver nova versão do draft."
+  approval_rounds: "Cada pedido de aprovação ocupa uma pasta {gate}-r{n} (06-approval/{asset_id}/ ou 06-approval/_campaign/) ou sampling-r{n} (amostragem, em 06-approval/{asset_id}/). Payload divergente, decisão expirada, approved_with_edits ou revogação abrem a rodada seguinte; as anteriores ficam imutáveis. approved_with_edits nunca autoriza execução (D2): só uma decisão approved da rodada seguinte, com hash recalculado, libera a ação. A decisão vigente é a da maior rodada do gate."
+  approved_payload: "A versão aprovada em G4 é identificada por payload_sha256, calculado por scripts/approval_tools.py hash (D1, D21); é imutável, e o payload.json da pasta da rodada é o que se executa (E8). Mudança vira nova versão e novo approval-request."
+  changelog: "O copy-publisher mantém 04-drafts/{asset_id}/changelog.jsonl (nome sempre em minúsculas, append-only, presente na árvore) com versão, autor, motivo e hash (task manage-versions)."
+
+immutability:
+  immutable_after_write: [approval-decision.json, payload.json, publish-receipt.json, performance-analysis-*.json, handoffs.jsonl, changelog.jsonl, agent-runs.jsonl, agent-evaluations.jsonl, lifecycle-events.jsonl]
+  immutable_after_state: {approval-request.json: "depois do approval-decision", "learning-record (approved)": "depois de learning_status approved", "04-drafts/v{n}.json": "depois de gravado"}
+  corrections: "Registro incorreto é corrigido por nova versão ou por evento compensatório com referência ao original; nunca por edição in-place."
+  payload_hash: "Cálculo e canonicalização em data/risk-policy.yaml (payload_integrity)."
+
+library_index:
+  path: ".data/copy-squad/{business}/_library/index.jsonl"
+  writer: knowledge-curator
+  mode: append_only_with_status_updates
+  required_fields: [asset_id, version, type, title, status, path, business, updated_at]
+  optional_fields: [format, campaign_id, source_artifact_id, tags, applies_to, usage_rights, review_after, created_at, updated_by]
+  field_rules:
+    asset_id: "Identificador estável (naming.asset_id) ou id da entrada de biblioteca (prova, ângulo, aprendizado) no mesmo padrão kebab-case."
+    version: "Inteiro >= 1; mudança de status gera nova linha com o mesmo asset_id e version maior."
+    type: "Enum de contracts/knowledge-query-result.schema.json (results[].type)."
+    status: "draft | approved | published | stale | archived."
+    path: "Caminho relativo dentro de _library/ (assets/, proofs/, angles/, learnings/, queries/)."
+    business: "Slug do {business}; nunca mistura negócios."
+  subfolders:
+    assets: "Cópia da versão aprovada ou publicada: assets/{asset_id}/v{n}.json."
+    proofs: "Provas e depoimentos, com source e usage_rights."
+    angles: "Ângulos vencedores e reprovados, com motivo."
+    learnings: "learning-record por lrn-id."
+    queries: "knowledge-query-result de consultas feitas sem campanha."
+
+retention:
+  telemetry_days: 365          # token TELEMETRY_RETENTION_DAYS
+  approvals_and_receipts: "Indefinida enquanto o negócio existir (trilha de auditoria)."
+  drafts: "Todas as versões por 24 meses após a publicação; a versão publicada, indefinida."
+  rejected_assets: "180 dias, com motivo, para alimentar aprendizado (learning-record qa_failure)."
+  library: "Indefinida; itens com review_after vencido são marcados stale, não apagados."
+  journey_log: "Conforme política do repositório (append-only)."
+  pii: "Dados pessoais de clientes (depoimentos, CRM) só ficam enquanto houver base legal e usage_rights; ao expirar, o curador anonimiza ou remove o item e registra evento compensatório."
+  deletion_rule: "Remoção só por pedido do approval-owner, registrada no journey log com motivo."
+
+write_rules:
+  - "Agentes escrevem apenas em .data/copy-squad/ e acrescentam ao journey log; nunca no workspace."
+  - "Escrever primeiro o artefato, depois o handoff-envelope, depois o evento de journey (ordem garante rastreabilidade)."
+  - "Escrita de arquivo único usa gravação atômica (arquivo temporário + renomear) para evitar JSON truncado."
+  - "Artefato inválido no schema não é persistido como pronto; fica com status needs_input ou blocked."
+  - "Leitura cruzada entre negócios é proibida; a biblioteca é por {business}."
+
+# ============================================================================
+# Journey log (Art. IX) — eventos do ciclo de vida
+# ============================================================================
+journey_log:
+  path: ".data/logs/journey/lifecycle-events.jsonl"
+  mode: append_only
+  record_fields:
+    required: [entity_id, entity_type, event_type, from_state, to_state, timestamp, triggered_by]
+    optional: [business, campaign_id, asset_id, artifact_ids, gate, quality_gate, payload_sha256, agent_run_id, reason, metadata]
+  field_rules:
+    entity_id: "campaign_id, asset_id ou apd/apr id, conforme entity_type."
+    timestamp: "ISO 8601 em UTC."
+    triggered_by: "id do agente, 'approval-owner' ou 'script'."
+    from_state: "null apenas no primeiro evento da entidade."
+    milestone_events: "from_state igual a to_state só é permitido em marco interno de estado (research_completed, angles_approved, approval_response_overdue); toda mudança de estado muda from_state e to_state."
+  entity_types: [copy-squad.campaign, copy-squad.asset, copy-squad.approval]
+
+  states:
+    copy-squad.campaign:
+      values: [demanda, estrategia, pesquisa, criacao, edicao, conformidade, aprovacao, publicacao, aprendizado, encerrada, bloqueada, cancelada]
+      note: "Os nove primeiros seguem a espinha ontológica do squad (config.yaml metadata.ontology_spine)."
+      workflow_state_mapping:
+        note: "Mapeamento dos estados da state_machine de wf-copy-production para o estado da campanha no journey log; bloqueios e gates humanos não criam estado novo da espinha."
+        phase-1_intake-plan: demanda
+        phase-2_strategy: estrategia
+        phase-3_research: pesquisa
+        phase-4_brief-consolidation: pesquisa
+        phase-5_ideation: criacao
+        phase-6_creation: criacao
+        phase-7_editing: edicao
+        phase-8_brand-voice: edicao
+        phase-9_compliance: conformidade
+        phase-10_approval-package: aprovacao
+        phase-11_publication: publicacao
+        phase-12_performance: aprendizado
+        phase-13_learning: aprendizado
+        awaiting_human_gate: "mantém o estado da fase corrente; o gate (G1 a G5 ou SAMPLING) vai no campo gate do evento. Saídas (D13): gN_approved, gN_rejected, gN_approved_with_edits (nova rodada, D2) e approval_response_overdue (permanece pendente e escala ao copy-chief, D3)"
+        escalated_to_copy_chief: "mantém o estado corrente; rework esgotado (REWORK_MAX_CYCLES = 2) escala ao copy-chief e nunca vai direto a vetoed (D13)"
+        failure_correction: "mantém o estado corrente; o evento registra reason e metadata da correção (G5)"
+        vetoed: "bloqueada (reversível via campaign_unblocked quando houver retrabalho; sem retrabalho possível, a campanha é cancelada por decisão humana)"
+        cancelled: cancelada
+        completed: encerrada
+    copy-squad.asset:
+      values: [rascunho, editado, voz_revisada, conformidade_revisada, aguardando_aprovacao, aprovado, publicado, reprovado, bloqueado, arquivado]
+      meta_status_mapping:
+        rascunho: draft
+        editado: ready
+        voz_revisada: ready
+        conformidade_revisada: needs_approval
+        aguardando_aprovacao: needs_approval
+        aprovado: approved
+        publicado: published
+        reprovado: rejected
+        bloqueado: blocked
+        arquivado: archived
+    copy-squad.approval:
+      values: [solicitada, aprovada, aprovada_com_edicoes, reprovada, expirada, executada, revogada, substituida]
+
+  events:
+    copy-squad.campaign:
+      - {event_type: campaign_opened,           from_state: null,         to_state: demanda,      triggered_by: copy-chief,      meaning: "Demanda registrada, campaign_id criado"}
+      - {event_type: plan_emitted,              from_state: demanda,      to_state: estrategia,   triggered_by: copy-chief,      meaning: "demand-intake e execution-plan prontos"}
+      - {event_type: strategy_drafted,          from_state: estrategia,   to_state: pesquisa,     triggered_by: brief-master,    meaning: "Fase 2 concluída: brief v1, audiência/VoC, oferta e voz prontos; pesquisa iniciada"}
+      - {event_type: research_completed,        from_state: pesquisa,     to_state: pesquisa,     triggered_by: research-analyst, meaning: "Marco interno (fase 3): research-packet aprovado em QG-RESEARCH; segue a consolidação do brief"}
+      - {event_type: strategy_approved,         from_state: pesquisa,     to_state: criacao,      triggered_by: approval-owner,  meaning: "Fase 4: brief consolidado aprovado em QG-BRIEF e em G1 (ou G1 dispensado pela política); ideação liberada"}
+      - {event_type: angles_approved,           from_state: criacao,      to_state: criacao,      triggered_by: "approval-owner | copy-chief", meaning: "Marco interno (fase 5): ângulos aprovados em G2 (risco high ou multi-ativo) ou apenas em QG-ANGLES; produção por formato liberada"}
+      - {event_type: drafts_completed,          from_state: criacao,      to_state: edicao,       triggered_by: copy-chief,      meaning: "Todos os drafts do plano passaram em QG-DRAFT"}
+      - {event_type: editing_completed,         from_state: edicao,       to_state: conformidade, triggered_by: copy-chief,      meaning: "Edição e voz aprovadas para todos os ativos"}
+      - {event_type: compliance_completed,      from_state: conformidade, to_state: aprovacao,    triggered_by: compliance-checker, meaning: "compliance-review aprovado; claims sensíveis resolvidos em G3 quando exigido (G3 ocorre após QG-COMPLIANCE)"}
+      - {event_type: approvals_completed,       from_state: aprovacao,    to_state: publicacao,   triggered_by: approval-owner,  meaning: "Aprovações G3/G4 válidas para os ativos"}
+      - {event_type: publication_completed,     from_state: publicacao,   to_state: aprendizado,  triggered_by: copy-publisher,  meaning: "Ativos publicados ou entregues; janela de performance aberta"}
+      - {event_type: campaign_closed,           from_state: aprendizado,  to_state: encerrada,     triggered_by: copy-chief,      meaning: "Aprendizados registrados e campanha encerrada"}
+      - {event_type: campaign_blocked,          from_state: "*",          to_state: bloqueada,    triggered_by: "copy-chief | compliance-checker", meaning: "VETO sem retrabalho possível ou decisão humana pendente"}
+      - {event_type: campaign_unblocked,        from_state: bloqueada,    to_state: "estado anterior", triggered_by: "copy-chief | approval-owner", meaning: "Bloqueio resolvido"}
+      - {event_type: campaign_cancelled,        from_state: "*",          to_state: cancelada,    triggered_by: approval-owner,  meaning: "Cancelamento decidido pelo humano"}
+    copy-squad.asset:
+      - {event_type: asset_drafted,             from_state: null,         to_state: rascunho,     triggered_by: "copywriter dono", meaning: "Nova versão v{n} gravada em 04-drafts"}
+      - {event_type: asset_edited,              from_state: rascunho,     to_state: editado,      triggered_by: copy-editor,     meaning: "edit-report aprovado em QG-EDIT"}
+      - {event_type: brand_reviewed,            from_state: editado,      to_state: voz_revisada, triggered_by: brand-voice-guardian, meaning: "brand-review aprovado em QG-BRAND"}
+      - {event_type: compliance_reviewed,       from_state: voz_revisada, to_state: conformidade_revisada, triggered_by: compliance-checker, meaning: "compliance-review aprovado em QG-COMPLIANCE"}
+      - {event_type: approval_requested,        from_state: conformidade_revisada, to_state: aguardando_aprovacao, triggered_by: copy-publisher, meaning: "approval-request emitido (G3/G4)"}
+      - {event_type: asset_approved,            from_state: aguardando_aprovacao, to_state: aprovado, triggered_by: approval-owner, meaning: "approval-decision approved (approved_with_edits não aprova o ativo: abre a rodada seguinte e o ativo permanece em aguardando_aprovacao, D2)"}
+      - {event_type: asset_published,           from_state: aprovado,     to_state: publicado,    triggered_by: copy-publisher,  meaning: "publish-receipt emitido"}
+      - {event_type: asset_rejected,            from_state: "*",          to_state: reprovado,    triggered_by: approval-owner,  meaning: "approval-decision rejected ou reprovação definitiva"}
+      - {event_type: asset_blocked,             from_state: "*",          to_state: bloqueado,    triggered_by: "agente do gate",  meaning: "VETO em quality gate"}
+      - {event_type: asset_rework,              from_state: "*",          to_state: rascunho,     triggered_by: "executor do gate",  meaning: "REVIEW devolveu ao produtor; nova versão será criada"}
+      - {event_type: asset_archived,            from_state: "*",          to_state: arquivado,    triggered_by: knowledge-curator, meaning: "Ativo substituído, expirado ou retirado"}
+    copy-squad.approval:
+      - {event_type: approval_opened,           from_state: null,         to_state: solicitada,   triggered_by: copy-publisher,  meaning: "approval-request criado com payload_sha256 e expires_at"}
+      - {event_type: approval_granted,          from_state: solicitada,   to_state: aprovada,     triggered_by: approval-owner,  meaning: "approved"}
+      - {event_type: approval_granted_with_edits, from_state: solicitada, to_state: aprovada_com_edicoes, triggered_by: approval-owner, meaning: "approved_with_edits; NÃO autoriza execução (D2): o copy-publisher aplica as edições, gera v{n+1}, abre a rodada seguinte com novo hash e o approval-owner confirma com approved"}
+      - {event_type: approval_denied,           from_state: solicitada,   to_state: reprovada,    triggered_by: approval-owner,  meaning: "rejected"}
+      - {event_type: approval_response_overdue, from_state: solicitada, to_state: solicitada, triggered_by: script, meaning: "Marco interno (D3): prazo de resposta (request.expires_at, criação + 72h) vencido sem decisão; o pedido permanece pendente, o copy-chief reenvia ou escala; silêncio nunca é aprovação e não há veto automático"}
+      - {event_type: approval_expired,          from_state: aprovada, to_state: expirada, triggered_by: script, meaning: "Janela de execução vencida (decision.expires_at = decided_at + 72h) sem execução; exige nova rodada"}
+      - {event_type: approval_executed,         from_state: aprovada, to_state: executada, triggered_by: copy-publisher, meaning: "publish-receipt com verification {sha_match, approval_valid, not_expired, bound_match, verify_ok} verdadeiros e counter_signed_by/counter_signed_at do copy-chief (D8, E4), após preflight pós-decisão; a execução é do humano ou da sessão principal"}
+      - {event_type: approval_revoked,          from_state: aprovada, to_state: revogada, triggered_by: approval-owner, meaning: "Revogação explícita antes da execução"}
+      - {event_type: approval_superseded,       from_state: "solicitada | aprovada | aprovada_com_edicoes", to_state: substituida, triggered_by: copy-publisher, meaning: "Payload mudou ou approved_with_edits aplicado; novo approval-request na rodada seguinte"}
+      - {event_type: payload_mismatch_vetoed,   from_state: aprovada, to_state: aprovada, triggered_by: copy-publisher, meaning: "sha256, destination, channel ou operation divergentes: execução bloqueada, estado mantido, novo pedido obrigatório"}
+
+  example_record:
+    note: "Exemplo ilustrativo"
+    value:
+      entity_id: "cvc-landing-mentoria-01"
+      entity_type: "copy-squad.asset"
+      event_type: "asset_approved"
+      from_state: "aguardando_aprovacao"
+      to_state: "aprovado"
+      timestamp: "2026-11-10T14:30:00Z"
+      triggered_by: "approval-owner"
+      business: "empresa-exemplo"
+      campaign_id: "camp-lancamento-mentoria-2026-q4"
+      gate: "G4"
+      payload_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+
+  emission_rule: >-
+    Toda transição de estado dos três tipos de entidade emite um evento. O
+    copy-chief emite os eventos de campanha; o agente que causa a transição emite
+    o evento do ativo; o copy-publisher e o approval-owner emitem os eventos de
+    aprovação. Falha ao registrar o evento não bloqueia o trabalho, mas gera
+    alerta de processo (AUT-08) e o evento é reemitido em seguida.
+
+telemetry:
+  agent_runs: {path: ".data/copy-squad/{business}/_telemetry/agent-runs.jsonl", contract: agent-run, required: [run_id, business, agent_name, task, model, prompt_version, input_ref, status, started_at]}
+  agent_evaluations: {path: ".data/copy-squad/{business}/_telemetry/agent-evaluations.jsonl", contract: agent-evaluation, required: [evaluation_id, agent_run_id, agent_name, evaluator, layer, metric_name, score, passed, created_at], business: "campo business (slug) em cada linha; o contrato agent-evaluation o carrega para isolar a avaliação por negócio"}
+  isolation_rule: "A telemetria vive em .data/copy-squad/{business}/_telemetry/; leitura e escrita ficam restritas ao {business} da execução."
+  content_policy: "Telemetria guarda referências (input_ref, output_ref) e métricas; não guarda prompt bruto, conteúdo de outro negócio nem dados pessoais. Os campos livres error e input_ref carregam só identificadores e códigos, nunca trechos de conteúdo ou caminhos de outro negócio."
+
+backups_and_export:
+  database_mirror: "docs/database-proposal.md propõe espelho relacional; o filesystem continua sendo a fonte de verdade."
+  export_unit: "Uma campanha inteira ({campaign_id}) é exportável copiando a pasta; os caminhos internos são relativos."

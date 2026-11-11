@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:agent-run:v1",
+  "title": "Agent Run (telemetria de execução)",
+  "description": "Uma linha por execução de agente em .data/copy-squad/_telemetry/agent-runs.jsonl (append-only). Não contém conteúdo bruto de prompt ou resposta, apenas referências.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "business",
+    "agent_name",
+    "task",
+    "model",
+    "prompt_version",
+    "input_ref",
+    "status",
+    "started_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^run-"
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "business": {
+      "type": "string"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "task": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "prompt_version": {
+      "type": "string"
+    },
+    "input_ref": {
+      "type": "string"
+    },
+    "output_ref": {
+      "type": "string"
+    },
+    "tokens_in": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tokens_out": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "enum": [
+        "success",
+        "failed",
+        "escalated",
+        "blocked"
+      ]
+    },
+    "error": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "cnt-artigo-fluxo-caixa-v1",
+    "artifact_type": "content-piece",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "content-copywriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.82,
+    "risk_level": "low",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "brief_id": "brf-mentoria-fluxo-caixa",
+  "format": "article",
+  "title": "Fluxo de caixa para pequenas empresas: por onde começar em uma tarde",
+  "thesis": "Um fluxo de caixa simples e atualizado toda semana vale mais do que uma planilha sofisticada que ninguém abre.",
+  "outline": [
+    "O que o fluxo de caixa responde que o lucro não responde",
+    "Três colunas para começar: entradas, saídas e saldo projetado",
+    "Rotina semanal de 20 minutos",
+    "Erros comuns ao misturar contas pessoais e da empresa",
+    "Próximo passo"
+  ],
+  "body": "Muita gente confunde lucro com dinheiro disponível. O lucro é uma conta de resultado; o fluxo de caixa mostra quando o dinheiro entra e sai.\n\nComece com três colunas: o que você espera receber, o que precisa pagar e o saldo projetado de cada semana. Atualize uma vez por semana, sempre no mesmo horário.\n\nEvite misturar contas pessoais e da empresa: defina uma retirada fixa e registre-a como saída.\n\nSe quiser apoio para montar o seu, conheça a mentoria.",
+  "cta": "Conheça a mentoria de gestão financeira",
+  "seo": {
+    "primary_keyword": "fluxo de caixa para pequenas empresas",
+    "secondary_keywords": [
+      "como fazer fluxo de caixa",
+      "gestão financeira para pequenos negócios"
+    ],
+    "meta_title": "Fluxo de caixa para pequenas empresas: comece hoje",
+    "meta_description": "Aprenda a montar um fluxo de caixa simples em uma tarde e a atualizá-lo em 20 minutos por semana.",
+    "search_intent": "informational"
+  },
+  "needs_expert_review": [
+    "Revisão de termos contábeis (lucro x caixa) por especialista financeiro antes de publicar"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "edt-exemplo-v1",
+    "artifact_type": "edit-report",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-editor",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "original_copy_id": "cvc-exemplo-v1",
+  "edited_sections": [
+    {
+      "section": "hero",
+      "text": "Texto editado"
+    }
+  ],
+  "changes": [
+    {
+      "type": "cut",
+      "before": "Texto longo",
+      "after": "Texto curto",
+      "reason": "Concisão"
+    }
+  ],
+  "word_count_before": 100,
+  "word_count_after": 75,
+  "reduction_pct": 25,
+  "preserved_claims": true,
+  "remaining_risks": [],
+  "escalations": [],
+  "quality_score": 80
+}

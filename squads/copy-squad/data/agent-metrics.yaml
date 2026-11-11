@@ -1,0 +1,361 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Métricas de avaliação por agente em três camadas (qualidade do output,
+    execução do agente, impacto de negócio) mais as métricas de agente autônomo.
+    Cada métrica traz fonte de medição, meta e cadência. Não se avalia o agente só
+    pelo texto: avalia-se se cumpriu o contrato, respeitou restrições, usou as
+    ferramentas certas e contribuiu para o resultado.
+  created_at: "2026-11-10"
+  governance: "Alinhado ao ADR-001 (docs/governance-decisions.md), que prevalece em caso de conflito."
+  single_source: >-
+    Este arquivo é a fonte única das metas por agente. As tabelas de métricas nos
+    agentes citam o id (CC-Q1, BM-O2, HA-O2...) e copiam o alvo exato daqui; em
+    divergência, vale este arquivo. A clareza do CTA usa MIN_CTA_CLARITY_SCORE (0.80).
+  principle: >-
+    O indicador mais importante não é quantos textos o squad produziu, e sim
+    quantas decisões comerciais corretas ele acelerou com qualidade, segurança e
+    retorno mensurável.
+
+layers:
+  quality:
+    definition: "Qualidade do output contra contrato, rubrica e checklist do papel."
+    recorded_by: copy-chief            # avaliador dos demais agentes; revisão humana por amostragem entra via approval-owner
+    self_evaluation_rule: "AP05: o copy-chief não registra as métricas CC-Q* (as próprias). Elas são calculadas por script a partir de handoffs.jsonl e execution-plan.json ou registradas pelo approval-owner; o copy-chief continua avaliando os demais agentes."
+    layer_value: quality
+  operational:
+    definition: "Execução: tempo, retrabalho, custo, latência, falhas e conformidade de processo."
+    recorded_by: script                # calculado de agent-runs.jsonl e handoffs.jsonl
+    layer_value: operational
+  business:
+    definition: "Contribuição para o resultado comercial; depende de publicação e janela de coleta."
+    recorded_by: cro-analyst
+    layer_value: business
+
+measurement_sources:
+  agent_runs: ".data/copy-squad/{business}/_telemetry/agent-runs.jsonl"
+  agent_evaluations: ".data/copy-squad/{business}/_telemetry/agent-evaluations.jsonl"
+  handoffs: ".data/copy-squad/{business}/{campaign_id}/handoffs.jsonl"
+  journey_log: ".data/logs/journey/lifecycle-events.jsonl"
+  approvals: ".data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-decision.json (e _campaign/{gate}-r{n}/ ou sampling-r{n}/)"
+  performance_analysis: ".data/copy-squad/{business}/{campaign_id}/08-performance/performance-analysis-{yyyymmdd}-{n}.json"
+  library_index: ".data/copy-squad/{business}/_library/index.jsonl"
+  quality_gate_results: "handoffs.jsonl (campo gate/reason) e eventos do journey log"
+  human_review: "approval-decision.comments/edits e learning-record com origin human_correction"
+
+cadences:
+  diario: "Revisão de fila, bloqueios, falhas e aprovações pendentes (copy-chief)."
+  semanal: "Performance por campanha, canal e agente (cro-analyst + copy-chief)."
+  mensal: "Atualização de brand voice, provas, objeções, prompts e rubricas; taxa de aprovação por agente."
+  trimestral: "Revisão de arquitetura, modelos, custos, permissões e riscos; recalibragem de metas."
+
+recording_rule: >-
+  Cada medição vira uma linha em agent-evaluations.jsonl (contrato agent-evaluation):
+  agent_run_id, agent_name, evaluator, layer, metric_name, score, threshold, passed,
+  feedback e, na camada quality, seniority_level_observed. Execuções são registradas
+  em agent-runs.jsonl (contrato agent-run). Linhas nunca são editadas.
+
+agents:
+
+# ----------------------------------------------------------------------------
+- agent_id: copy-chief
+  nucleus: Comando
+  quality:
+    - {id: CC-Q1, name: "Aderência do fluxo executado ao execution-plan (fases na ordem, sem pular gate)", target: ">= 95%", source: "handoffs + journey_log", cadence: semanal, evaluator: script}
+    - {id: CC-Q2, name: "Completude do plano: todas as etapas com output_contract, gate e critério de sucesso", target: ">= 95%", source: "execution-plan.json", cadence: semanal, evaluator: script}
+    - {id: CC-Q3, name: "Handoff correto: envelope válido para o agente certo", target: ">= 98%", source: "handoffs.jsonl", cadence: semanal, evaluator: script}
+    - {id: CC-Q4, name: "Classificação de risco correta (confirmada pelo compliance e pelo approval-owner)", target: ">= 95%", source: "risk-policy + compliance-review", cadence: mensal, evaluator: approval-owner}
+  operational:
+    - {id: CC-O1, name: "Latência de roteamento (demanda → plano)", target: "<= 30 min (SLA_PLAN_MIN)", source: agent_runs, cadence: semanal}
+    - {id: CC-O2, name: "Taxa de retrabalho (itens em REVIEW ou VETO / itens totais)", target: "<= 20%", source: quality_gate_results, cadence: semanal}
+    - {id: CC-O3, name: "Escalonamentos ao humano por item (necessários vs. evitáveis)", target: "evitáveis <= 5%", source: "journey_log", cadence: mensal}
+  business:
+    - {id: CC-B1, name: "Tempo até primeira entrega aprovada", target: "tendência decrescente trimestre a trimestre", source: journey_log, cadence: mensal}
+    - {id: CC-B2, name: "Throughput: ativos publicados por semana com G4 aprovado", target: "meta definida por negócio", source: "publish-receipt", cadence: semanal}
+
+# ----------------------------------------------------------------------------
+- agent_id: brief-master
+  nucleus: Estratégia
+  quality:
+    - {id: BM-Q1, name: "Completude do brief (campos obrigatórios e critérios de aceite)", target: ">= 95%", source: "brief.json + QG-BRIEF", cadence: semanal}
+    - {id: BM-Q2, name: "Relevância das perguntas (cada pergunta fecha lacuna bloqueante)", target: ">= 90%", source: "demand-intake + avaliação", cadence: mensal}
+    - {id: BM-Q3, name: "Ausência de suposições: preço, garantia e resultado nunca presumidos", target: "100%", source: "QG-BRIEF veto_conditions", cadence: semanal}
+  operational:
+    - {id: BM-O1, name: "Idas e voltas por brief (rodadas de perguntas)", target: "<= 2", source: handoffs, cadence: semanal}
+    - {id: BM-O2, name: "Tempo de brief v1 e de aprovação em G1", target: "v1 <= 4h; G1 <= 24h", source: "agent_runs + approvals", cadence: semanal}
+  business:
+    - {id: BM-B1, name: "Redução de retrabalho a jusante (ativos devolvidos por desvio de brief)", target: "<= 10% dos ativos", source: "quality_gate_results (QG-DRAFT DRF-2)", cadence: mensal}
+    - {id: BM-B2, name: "Briefs aprovados em G1 na primeira submissão", target: ">= 70%", source: approvals, cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: audience-voc
+  nucleus: Estratégia
+  quality:
+    - {id: AV-Q1, name: "Frases de cliente com origem rastreável (customer_phrases com source)", target: "100%", source: "audience-voc.json", cadence: semanal}
+    - {id: AV-Q2, name: "Cobertura das categorias de objeção com evidência", target: ">= 6 de 8 categorias avaliadas", source: "audience-voc.json", cadence: mensal}
+    - {id: AV-Q3, name: "Separação entre evidência e inferência (gaps declarados)", target: "100%", source: "audience-voc-checklist", cadence: semanal}
+  operational:
+    - {id: AV-O1, name: "Fontes analisadas por mapa (sources_analyzed)", target: ">= 3 fontes distintas quando existirem", source: "audience-voc.json", cadence: semanal}
+    - {id: AV-O2, name: "Tempo de entrega do mapa de audiência", target: "<= 6h", source: agent_runs, cadence: semanal}
+  business:
+    - {id: AV-B1, name: "Reuso de frases e objeções nos ativos aprovados", target: ">= 40% dos ativos usam >= 1 frase do banco", source: "conversion-copy + library_index", cadence: mensal}
+    - {id: AV-B2, name: "Objeções do mapa que aparecem como dúvida real pós-publicação", target: "tendência crescente", source: "performance-analysis", cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: offer-strategist
+  nucleus: Estratégia
+  quality:
+    - {id: OS-Q1, name: "Provas com fonte, verificação e usage_rights (proof_stack)", target: "100% com source; 0 depoimentos sem direito de uso apresentados como verificados", source: "offer-canvas.json", cadence: semanal}
+    - {id: OS-Q2, name: "Urgência apenas legítima (legitimate_urgency.exists com motivo)", target: "100%", source: "offer-canvas.json + compliance-review", cadence: semanal}
+    - {id: OS-Q3, name: "Decisões de preço e promessa deixadas ao humano (opções, não decisões)", target: "100%", source: "offer-canvas.needs_approval", cadence: mensal}
+  operational:
+    - {id: OS-O1, name: "Claims devolvidos pelo compliance por falta de prova", target: "<= 10%", source: "compliance-review", cadence: mensal}
+    - {id: OS-O2, name: "Tempo para offer-canvas completo", target: "<= 6h", source: agent_runs, cadence: semanal}
+  business:
+    - {id: OS-B1, name: "Aprovação de oferta em G3 sem reescrita estrutural", target: ">= 70%", source: approvals, cadence: mensal}
+    - {id: OS-B2, name: "Respostas a objeções reaproveitadas em ativos que superam o baseline", target: "tendência crescente", source: "performance-analysis", cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: brand-voice-guardian
+  nucleus: "Estratégia + Qualidade"
+  quality:
+    - {id: BV-Q1, name: "Precisão da detecção de desvio (concordância com revisão humana por amostragem)", target: ">= 90%", source: "brand-review + human_review", cadence: mensal}
+    - {id: BV-Q2, name: "Falsos positivos de severidade critical", target: "<= 5%", source: "agent_evaluations", cadence: mensal}
+    - {id: BV-Q3, name: "Revisão não altera fatos, preço, promessa ou claim", target: "100%", source: "QG-BRAND BVR-5", cadence: semanal}
+    - {id: BV-Q4, name: "Qualidade do guia de voz (vocabulário, tom por contexto, exemplos do e não fazer)", target: ">= 90% do checklist", source: "brand-voice-guide.json", cadence: trimestral}
+  operational:
+    - {id: BV-O1, name: "Tempo por brand-review", target: "<= 4h (SLA_QUALITY_REVIEW_HOURS)", source: agent_runs, cadence: semanal}
+    - {id: BV-O2, name: "Peças devolvidas ao editor por rodada de voz", target: "<= 1 ciclo em média", source: handoffs, cadence: semanal}
+  business:
+    - {id: BV-B1, name: "brand_alignment_score médio das peças aprovadas", target: ">= 85", source: "brand-review.json", cadence: mensal}
+    - {id: BV-B2, name: "Edições humanas por inconsistência de voz em G4", target: "<= 5% dos ativos", source: approvals, cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: research-analyst
+  nucleus: "Produção (pesquisa)"
+  quality:
+    - {id: RA-Q1, name: "Precisão factual (facts verified sustentados pela fonte citada)", target: ">= 95% na amostra", source: "research-packet + QG-RESEARCH", cadence: semanal}
+    - {id: RA-Q2, name: "Citações verificáveis (título, locator, tipo e data de acesso)", target: "100%", source: "sources[]", cadence: semanal}
+    - {id: RA-Q3, name: "Cobertura de fontes (primárias e oficiais priorizadas)", target: ">= 50% primary/official/customer", source: "research-packet.json", cadence: mensal}
+  operational:
+    - {id: RA-O1, name: "Fontes por brief e lacunas detectadas", target: ">= 8 fontes quando disponíveis; gaps sempre declarados", source: "research-packet.json", cadence: semanal}
+    - {id: RA-O2, name: "Tempo de pesquisa", target: "<= 8h (SLA_RESEARCH_HOURS)", source: agent_runs, cadence: semanal}
+  business:
+    - {id: RA-B1, name: "Qualidade percebida pelos produtores (nota 1-5 em amostra)", target: ">= 4.0", source: "human_review", cadence: mensal}
+    - {id: RA-B2, name: "Claims revertidos pelo compliance por fonte frágil", target: "<= 5%", source: "compliance-review", cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: hook-angle-creator
+  nucleus: Produção
+  quality:
+    - {id: HA-Q1, name: "Originalidade e diversidade (ângulos distintos entre si)", target: ">= 85% sem sobreposição de promessa", source: "angles.json + QG-ANGLES", cadence: semanal}
+    - {id: HA-Q2, name: "Especificidade: promessa + mecanismo + prova possível em cada ângulo", target: "100%", source: "angles.json", cadence: semanal}
+    - {id: HA-Q3, name: "Ausência de escassez, urgência ou autoridade falsas", target: "100%", source: "QG-ANGLES veto_conditions", cadence: semanal}
+  operational:
+    - {id: HA-O1, name: "Ângulos por rodada", target: ">= 20 (MIN_ANGLES_FULL) nos workflows completos; >= 5 (MIN_ANGLES_FAST_LANE) na fast lane", source: "angles.json", cadence: semanal}
+    - {id: HA-O2, name: "Taxa de seleção em G2 (ângulos do shortlist de 5 aprovados, ANGLES_SHORTLIST_SIZE)", target: ">= 40%", source: approvals, cadence: mensal}
+  business:
+    - {id: HA-B1, name: "CTR inicial e engajamento dos ângulos publicados vs baseline", target: ">= baseline do canal", source: performance_analysis, cadence: mensal}
+    - {id: HA-B2, name: "Ângulos vencedores promovidos à biblioteca", target: "tendência crescente", source: library_index, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: conversion-copywriter
+  nucleus: Produção
+  quality:
+    - {id: CV-Q1, name: "Aderência à oferta e ao ângulo aprovado", target: ">= 95%", source: "conversion-copy.json + QG-DRAFT", cadence: semanal}
+    - {id: CV-Q2, name: "Claims sem prova marcados needs_approval (nenhum claim inventado)", target: "100%", source: "compliance-review", cadence: semanal}
+    - {id: CV-Q3, name: "Clareza do CTA (MIN_CTA_CLARITY_SCORE)", target: ">= 0.80", source: "conversion-copy-checklist", cadence: semanal}
+    - {id: CV-Q4, name: "Cobertura da estrutura atenção-problema-mecanismo-prova-oferta-objeções-risco-CTA", target: "100% das seções aplicáveis", source: "conversion-copy.json", cadence: mensal}
+  operational:
+    - {id: CV-O1, name: "Revisões necessárias por peça até APPROVE", target: "<= 1,5", source: handoffs, cadence: semanal}
+    - {id: CV-O2, name: "Tempo para v1 e custo por peça", target: "v1 <= 8h; custo dentro do orçamento do plano", source: agent_runs, cadence: semanal}
+  business:
+    - {id: CV-B1, name: "Taxa de conversão, CPL, CPA e receita por sessão vs baseline", target: ">= baseline com significância (AB_CONFIDENCE_LEVEL)", source: performance_analysis, cadence: mensal}
+    - {id: CV-B2, name: "Variantes que superam o controle em teste concluído", target: ">= 20% dos testes", source: performance_analysis, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: content-copywriter
+  nucleus: Produção
+  quality:
+    - {id: CT-Q1, name: "Relevância e profundidade (tese clara, argumentos, exemplos)", target: ">= 85% do checklist", source: "content-quality-checklist", cadence: semanal}
+    - {id: CT-Q2, name: "Afirmações factuais com fonte citada", target: "100%", source: "content-piece.meta.sources", cadence: semanal}
+    - {id: CT-Q3, name: "SEO coerente (keyword, meta_title <= 60, meta_description <= 160)", target: "100% dos artigos", source: "content-piece.json", cadence: semanal}
+  operational:
+    - {id: CT-O1, name: "Tempo de produção e atualizações de conteúdo vencido", target: "v1 <= 8h; revisão de evergreen a cada 6 meses", source: agent_runs, cadence: mensal}
+    - {id: CT-O2, name: "Cobertura de tópicos do plano editorial", target: ">= 90%", source: "execution-plan", cadence: mensal}
+  business:
+    - {id: CT-B1, name: "Tráfego orgânico, leads e tempo na página vs baseline", target: ">= baseline", source: performance_analysis, cadence: mensal}
+    - {id: CT-B2, name: "Derivados gerados por ativo longo (repurposing)", target: ">= 5 por ativo longo", source: library_index, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: ux-writer
+  nucleus: Produção
+  quality:
+    - {id: UX-Q1, name: "Clareza e ação: o texto diz o que houve, por quê e o que fazer", target: ">= 90%", source: "ux-copy-checklist", cadence: semanal}
+    - {id: UX-Q2, name: "Consistência com o glossário do produto", target: "100%", source: "ux-copy.glossary_terms_used", cadence: semanal}
+    - {id: UX-Q3, name: "Limites de caractere e nota de acessibilidade presentes", target: "100% dos elementos", source: "ux-copy.json", cadence: semanal}
+  operational:
+    - {id: UX-O1, name: "Retrabalho com produto por funcionalidade inventada", target: "0", source: "human_review", cadence: mensal}
+    - {id: UX-O2, name: "Tempo por superfície", target: "<= 4h", source: agent_runs, cadence: semanal}
+  business:
+    - {id: UX-B1, name: "Taxa de erro em formulários e conclusão de onboarding", target: "melhora vs baseline", source: performance_analysis, cadence: mensal}
+    - {id: UX-B2, name: "Tickets de suporte relacionados a texto de interface", target: "redução vs baseline", source: performance_analysis, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: video-social-scriptwriter
+  nucleus: Produção
+  quality:
+    - {id: VS-Q1, name: "Força do hook (específico nos primeiros 3 segundos)", target: ">= 85% do checklist", source: "video-script-checklist", cadence: semanal}
+    - {id: VS-Q2, name: "Aderência à plataforma e à duração", target: "100%", source: "video-script.json + channel-specs", cadence: semanal}
+    - {id: VS-Q3, name: "Prova e claims verificados (sem resultado irreal)", target: "100%", source: "compliance-review", cadence: semanal}
+  operational:
+    - {id: VS-O1, name: "Variações para teste por roteiro", target: ">= 3", source: "video-script.variations", cadence: semanal}
+    - {id: VS-O2, name: "Tempo por roteiro", target: "<= 6h", source: agent_runs, cadence: semanal}
+  business:
+    - {id: VS-B1, name: "Retenção média, watch time e taxa de conclusão", target: ">= baseline do formato", source: performance_analysis, cadence: mensal}
+    - {id: VS-B2, name: "CTR do vídeo e leads atribuídos", target: ">= baseline", source: performance_analysis, cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: email-crm-copywriter
+  nucleus: Produção
+  quality:
+    - {id: EC-Q1, name: "Relevância por segmento e clareza do CTA", target: ">= 90% do checklist", source: "email-crm-checklist", cadence: semanal}
+    - {id: EC-Q2, name: "consent_basis presente e respeito a preferências (anti-spam, LGPD)", target: "100%", source: "email-journey.json + compliance-review", cadence: semanal}
+    - {id: EC-Q3, name: "Zero falsa escassez; requires_approval = true em todos os e-mails", target: "100%", source: "email-journey.json", cadence: semanal}
+  operational:
+    - {id: EC-O1, name: "Entrega, abertura, clique e descadastro", target: "descadastro <= benchmark da lista", source: performance_analysis, cadence: semanal}
+    - {id: EC-O2, name: "Tempo por jornada", target: "<= 8h", source: agent_runs, cadence: semanal}
+  business:
+    - {id: EC-B1, name: "Conversão e receita por e-mail", target: ">= baseline", source: performance_analysis, cadence: mensal}
+    - {id: EC-B2, name: "Retenção e reativação atribuídas à jornada", target: "melhora vs baseline", source: performance_analysis, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: localization-specialist
+  nucleus: Produção
+  quality:
+    - {id: LO-Q1, name: "Fidelidade de claims, números, preços e moeda ao original", target: "100%", source: "localization.json + QG-LOCALIZATION", cadence: semanal}
+    - {id: LO-Q2, name: "Naturalidade e persuasão no target_locale (revisão por falante nativo em amostra)", target: ">= 85%", source: human_review, cadence: mensal}
+    - {id: LO-Q3, name: "adaptation_notes e cultural_flags registrados", target: "100% das adaptações relevantes", source: "localization.json", cadence: semanal}
+  operational:
+    - {id: LO-O1, name: "Tempo por peça localizada", target: "<= 6h", source: agent_runs, cadence: semanal}
+    - {id: LO-O2, name: "Retornos do compliance por divergência de claim", target: "<= 5%", source: "compliance-review", cadence: mensal}
+  business:
+    - {id: LO-B1, name: "Conversão da versão localizada vs original no mercado-alvo", target: ">= 0,8x do original no primeiro ciclo", source: performance_analysis, cadence: trimestral}
+    - {id: LO-B2, name: "Reuso de termos intraduzíveis e glossário entre campanhas", target: "tendência crescente", source: library_index, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: copy-editor
+  nucleus: Qualidade
+  quality:
+    - {id: ED-Q1, name: "Preservação de fatos e claims (preserved_claims verdadeiro e confirmado)", target: "100%", source: "edit-report.json + QG-EDIT", cadence: semanal}
+    - {id: ED-Q2, name: "Clareza, concisão e estrutura (quality_score)", target: ">= 80 (EDIT_QUALITY_MIN)", source: "edit-report.json", cadence: semanal}
+    - {id: ED-Q3, name: "Cada mudança relevante justificada (type, before, after, reason)", target: "100%", source: "edit-report.changes", cadence: semanal}
+  operational:
+    - {id: ED-O1, name: "Redução de palavras em edição de concisão", target: "20% a 40% (CONCISION_CUT_RANGE)", source: "edit-report.reduction_pct", cadence: semanal}
+    - {id: ED-O2, name: "Tempo de edição", target: "<= 2h (SLA_EDIT_HOURS)", source: agent_runs, cadence: semanal}
+  business:
+    - {id: ED-B1, name: "Melhora de conversão ou engajamento pós-edição em testes A/B de versão editada vs original", target: ">= 0 com significância quando testado", source: performance_analysis, cadence: trimestral}
+    - {id: ED-B2, name: "Escalonamentos corretos de problemas que exigem pesquisa ou decisão de negócio", target: "100% dos casos identificados", source: "edit-report.escalations", cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: compliance-checker
+  nucleus: "Qualidade/Inteligência"
+  quality:
+    - {id: CP-Q1, name: "Cobertura de claims (claims detectados / claims reais em amostra auditada)", target: ">= 98%", source: "compliance-review + auditoria por amostragem", cadence: mensal}
+    - {id: CP-Q2, name: "Falsos negativos (risco não detectado que surgiu depois)", target: "0 críticos; <= 2% total", source: "journey_log + human_review", cadence: mensal}
+    - {id: CP-Q3, name: "Falsos positivos (bloqueios revertidos pelo approval-owner)", target: "<= 10%", source: approvals, cadence: mensal}
+    - {id: CP-Q4, name: "Relatório separa FATOS [FONTE], RECOMENDAÇÃO e HIPÓTESE", target: "100% dos relatórios com claim crítico", source: "compliance-review.epistemic", cadence: semanal}
+  operational:
+    - {id: CP-O1, name: "Tempo de revisão", target: "<= 4h (SLA_QUALITY_REVIEW_HOURS)", source: agent_runs, cadence: semanal}
+    - {id: CP-O2, name: "Bloqueios e exceções registrados", target: "100% com blocking_reasons", source: "compliance-review.json", cadence: semanal}
+  business:
+    - {id: CP-B1, name: "Redução de risco: incidentes pós-publicação (reclamação, reprovação de plataforma, retirada)", target: "0 incidentes críticos", source: journey_log, cadence: mensal}
+    - {id: CP-B2, name: "Aprovações em G3/G4 sem retrabalho", target: ">= 80%", source: approvals, cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: cro-analyst
+  nucleus: Inteligência
+  quality:
+    - {id: CR-Q1, name: "Qualidade da hipótese (variável única, efeito esperado, desenho do teste)", target: ">= 90% do cro-test-checklist", source: "performance-analysis.hypotheses", cadence: semanal}
+    - {id: CR-Q2, name: "Rigor estatístico: nenhum vencedor sem AB_CONFIDENCE_LEVEL (0.95) e AB_MIN_SAMPLE_PER_VARIANT, salvo critério pré-registrado no design-ab-test", target: "100%", source: "performance-analysis.significance", cadence: semanal}
+    - {id: CR-Q3, name: "Priorização ICE coerente e justificada", target: ">= 90%", source: "hypotheses[].ice", cadence: mensal}
+    - {id: CR-Q4, name: "Separação fato / recomendação / hipótese (epistemic)", target: "100%", source: "performance-analysis.epistemic", cadence: semanal}
+  operational:
+    - {id: CR-O1, name: "Testes lançados e concluídos por semana", target: "conforme capacidade do canal; concluídos >= 80% dos lançados", source: performance_analysis, cadence: semanal}
+    - {id: CR-O2, name: "Ciclos de análise por semana e tempo de análise", target: "análise em <= 1 dia útil após fechar a janela", source: agent_runs, cadence: semanal}
+  business:
+    - {id: CR-B1, name: "Lift de conversão acumulado de testes concluídos", target: "positivo e crescente", source: performance_analysis, cadence: trimestral}
+    - {id: CR-B2, name: "Receita incremental atribuída a vencedores validados", target: "meta definida por negócio", source: performance_analysis, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: knowledge-curator
+  nucleus: Inteligência
+  quality:
+    - {id: KC-Q1, name: "Relevância e precisão da recuperação (resultados úteis / retornados)", target: ">= 85%", source: "knowledge-query-result + human_review", cadence: mensal}
+    - {id: KC-Q2, name: "Completude do registro (fonte, data, autor, versão, status)", target: "100% das entradas", source: "library_index", cadence: semanal}
+    - {id: KC-Q3, name: "Isolamento por negócio (zero vazamento entre {business})", target: "0 ocorrências", source: "auditoria de paths", cadence: semanal}
+  operational:
+    - {id: KC-O1, name: "Taxa de recuperação útil e lacunas apontadas (missing_knowledge)", target: ">= 70% das consultas com pelo menos 1 resultado aprovado", source: agent_runs, cadence: mensal}
+    - {id: KC-O2, name: "Tempo de busca e de registro de aprendizado", target: "busca <= 5 min; registro <= 1 dia após o fechamento da análise", source: agent_runs, cadence: semanal}
+  business:
+    - {id: KC-B1, name: "Reuso de ativos aprovados (ativos novos que partiram de um ativo da biblioteca)", target: ">= 30%", source: library_index, cadence: trimestral}
+    - {id: KC-B2, name: "Redução do custo por campanha atribuída a reuso", target: "tendência decrescente", source: agent_runs, cadence: trimestral}
+
+# ----------------------------------------------------------------------------
+- agent_id: copy-publisher
+  nucleus: Operação
+  quality:
+    - {id: PB-Q1, name: "Pacote de aprovação completo (payload, hash calculado por approval_tools.py, política, revisões anexas, expiração, idempotência)", target: "100%", source: "approval-request.json + QG-PUBLISH-PREFLIGHT", cadence: semanal}
+    - {id: PB-Q2, name: "Preflight pós-decisão (approval_tools.py verify --for-execution: sha256, bound_to, decisão approved, human_attested, now < decision.expires_at) contra-assinado pelo copy-chief antes de qualquer execução", target: "100%", source: "publish-receipt.verification + handoffs.jsonl (E42, E43)", cadence: semanal}
+    - {id: PB-Q3, name: "Histórico de versões auditável (nenhuma sobrescrita)", target: "100%", source: "04-drafts + changelog", cadence: semanal}
+  operational:
+    - {id: PB-O1, name: "Tempo da aprovação ao recibo de publicação", target: "<= 60 min (SLA_PUBLISH_MIN)", source: "approvals + publish-receipt", cadence: semanal}
+    - {id: PB-O2, name: "Execuções bloqueadas por VETO de preflight (indicador de qualidade do processo, não de falha do publisher)", target: "registrar 100%; investigar recorrência", source: journey_log, cadence: semanal}
+  business:
+    - {id: PB-B1, name: "Entregas no prazo combinado", target: ">= 95%", source: "publish-receipt vs execution-plan", cadence: mensal}
+    - {id: PB-B2, name: "Retrabalho de publicação (nova rodada por divergência de payload, decisão expirada ou approved_with_edits)", target: "<= 5%", source: journey_log, cadence: mensal}
+
+# ----------------------------------------------------------------------------
+- agent_id: approval-owner
+  nucleus: Governança
+  note: "Papel humano. As métricas medem a saúde do fluxo de aprovação e a qualidade das correções, não 'desempenho' da pessoa."
+  quality:
+    - {id: AO-Q1, name: "Decisões com razão registrada (comments em rejected e approved_with_edits)", target: "100%", source: "approval-decision.json", cadence: semanal}
+    - {id: AO-Q3, name: "Decisões com proveniência humana válida (human_attested true, recorded_via human-cli ou human-chat-confirmed, reviewer em human_gates.approvers)", target: "100%", source: "approval-decision.json", cadence: semanal}
+    - {id: AO-Q2, name: "Correções (G5) com exemplo de referência utilizável (before, after, reason)", target: ">= 90%", source: "learning-record origin human_correction", cadence: mensal}
+  operational:
+    - {id: AO-O1, name: "Tempo de resposta em G1–G4", target: "<= 24h (SLA_HUMAN_GATE_HOURS)", source: "approval-request.meta.produced_at vs approval-decision.decided_at", cadence: diario}
+    - {id: AO-O2, name: "Decisões expiradas sem uso (janela de execução de 72h após decided_at)", target: "<= 5%", source: approvals, cadence: semanal}
+    - {id: AO-O3, name: "Pedidos pendentes além do prazo de resposta (approval-request.expires_at; silêncio nunca é aprovação)", target: "reenviados ou escalados pelo copy-chief em 100%", source: "approvals + journey_log (approval_response_overdue)", cadence: diario}
+  business:
+    - {id: AO-B1, name: "Aprovações sem retrabalho a jusante", target: ">= 80%", source: journey_log, cadence: mensal}
+    - {id: AO-B2, name: "Decisões estratégicas tomadas por humano (posicionamento, preço, promessa, segmento, prioridade)", target: "100% registradas", source: "approval-decision + brief", cadence: mensal}
+
+# ============================================================================
+# Métricas de agente autônomo (aplicam-se a todos os 18 agentes de IA)
+# ============================================================================
+autonomous_agent_metrics:
+  scope: "Todos os agentes de IA; calculadas de agent-runs.jsonl e agent-evaluations.jsonl."
+  metrics:
+    - {id: AUT-01, name: "Taxa de conclusão de tarefa", definition: "runs com status success / runs iniciados", target: ">= 90%", source: agent_runs, cadence: semanal}
+    - {id: AUT-02, name: "Precisão de chamada de ferramenta", definition: "chamadas de leitura, escrita e validação corretas / total de chamadas", target: ">= 95%", source: agent_runs, cadence: semanal}
+    - {id: AUT-03, name: "Aderência ao plano", definition: "passos executados na ordem do execution-plan, sem desvio não justificado", target: ">= 95%", source: "handoffs + execution-plan", cadence: semanal}
+    - {id: AUT-04, name: "Tempo até conclusão", definition: "finished_at - started_at por task vs SLA do token", target: "dentro do SLA em >= 90% dos runs", source: agent_runs, cadence: semanal}
+    - {id: AUT-05, name: "Custo por tarefa", definition: "cost_usd por task e por ativo aprovado", target: "dentro do orçamento do plano; sem aumento > 20% trimestre a trimestre sem justificativa", source: agent_runs, cadence: mensal}
+    - {id: AUT-06, name: "Taxa de recuperação de erro", definition: "runs falhos que se recuperaram com retry ou escalonamento correto / runs falhos", target: ">= 80%", source: agent_runs, cadence: mensal}
+    - {id: AUT-07, name: "Latência", definition: "latency_ms por run (p50 e p95)", target: "p95 dentro de 2x a mediana histórica da task", source: agent_runs, cadence: semanal}
+    - {id: AUT-08, name: "Segurança", definition: "violações das regras universais (ação externa sem aprovação, approval-decision escrita por agente, hash não calculado por script, claim inventado, instrução de conteúdo de terceiros seguida, dado de outro negócio, escrita fora de .data/copy-squad)", target: "0", source: "agent_runs + auditoria + journey_log", cadence: diario}
+
+thresholds:
+  agent_pass_rate_min: 0.80            # token AGENT_PASS_RATE_MIN
+  review_prompt_trigger:
+    condition: "passed_rate < AGENT_PASS_RATE_MIN na janela mensal, ou qualquer violação de segurança (AUT-08 > 0)"
+    action: "copy-chief abre revisão do prompt_version do agente e registra em docs/agent-changelog.md"
+  regression_guard: "Mudança de prompt_version exige reavaliação com 10 execuções de referência (correções humanas anteriores) antes de voltar a produção."
+
+reporting:
+  daily: "Fila de aprovação, bloqueios, falhas e violações (AUT-08)."
+  weekly: "Painel por agente (qualidade, operacional) + performance por campanha e canal (business)."
+  monthly: "Taxa de aprovação por agente, ajustes de prompt, rubricas, voz e provas; revisão de seniority_level_observed por agente."
+  quarterly: "Arquitetura, modelos, custos, permissões, riscos e recalibragem de metas."

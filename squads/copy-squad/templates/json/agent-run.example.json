@@ -1,0 +1,11 @@
+{
+  "run_id": "run-exemplo",
+  "business": "exemplo-negocio",
+  "agent_name": "brief-master",
+  "task": "create-brief",
+  "model": "sonnet",
+  "prompt_version": "1.0.0",
+  "input_ref": ".data/copy-squad/exemplo-negocio/camp-exemplo/00-intake/demand-intake.json",
+  "status": "success",
+  "started_at": "2026-11-10T14:00:00-03:00"
+}

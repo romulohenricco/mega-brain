@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "loc-lp-mentoria-es-v2",
+    "artifact_type": "localization",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "localization-specialist",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.76,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "source_copy_id": "cvc-lp-mentoria-v2",
+  "source_locale": "pt-BR",
+  "target_locale": "es-MX",
+  "localized_sections": [
+    {
+      "section": "hero",
+      "text": "Sepa cuánto dinero tendrá su empresa a fin de mes. Mentoría de gestión financiera para pequeñas empresas."
+    },
+    {
+      "section": "cta-final",
+      "text": "Agende una conversación de diagnóstico y vea si la mentoría encaja con su momento."
+    }
+  ],
+  "adaptation_notes": [
+    {
+      "original": "fim do mês",
+      "adapted": "fin de mes",
+      "reason": "Equivalente natural no uso comercial mexicano."
+    },
+    {
+      "original": "pequenas empresas",
+      "adapted": "pequeñas empresas",
+      "reason": "Termo corrente; 'pymes' avaliado e descartado por formalidade."
+    }
+  ],
+  "cultural_flags": [
+    "Moeda e formas de pagamento precisam ser definidas para o mercado mexicano antes de publicar."
+  ],
+  "untranslatable_terms": [
+    "fluxo de caixa (usar 'flujo de caja', confirmar glossário local)"
+  ],
+  "requires_compliance_recheck": true
+}

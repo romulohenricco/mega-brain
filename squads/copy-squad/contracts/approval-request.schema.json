@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:approval-request:v1",
+  "title": "Approval Request (pedido de aprovação humana)",
+  "description": "Pacote enviado ao approval-owner antes de qualquer publicação, envio ou veiculação. Trava o payload por sha256 e registra revisões, política de risco aplicada, validade e trilha de auditoria. Produzido somente pelo copy-publisher (tasks/prepare-approval-package.md); consumido pelo approval-owner. destination, channel e operation ficam fora do hash, mas a decisão os copia em bound_to e o preflight compara tudo por igualdade.",
+  "type": "object",
+  "required": [
+    "meta",
+    "asset_id",
+    "gate",
+    "operation",
+    "destination",
+    "channel",
+    "payload",
+    "payload_sha256",
+    "risk_level",
+    "policy_applied",
+    "requested_by",
+    "approver_role",
+    "expires_at",
+    "idempotency_key",
+    "audit_trail"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/meta"
+        },
+        {
+          "required": [
+            "campaign_id"
+          ]
+        }
+      ],
+      "description": "meta.campaign_id é obrigatório: compõe a idempotency_key e a pasta de persistência."
+    },
+    "asset_id": {
+      "type": "string",
+      "description": "Identificador estável do ativo sob aprovação, sem sufixo de versão; a versão exata do draft vai dentro do payload (payload.draft_id = {asset_id}-v{n}; meta.artifact_id do draft = {asset_id}-v{n}). Nos gates de nível campanha (G1, G2 e G3 de oferta) asset_id = campaign_id e o pedido mora em 06-approval/_campaign/{gate}-r{n}/."
+    },
+    "gate": {
+      "enum": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "SAMPLING"
+      ],
+      "description": "Gate humano do pedido. SAMPLING = amostragem de uso interno (06-approval/{asset_id}/sampling-r{n}/). G5 não usa approval-request na prática (vai por correct-agent-failure), mantido por compatibilidade. Nas pastas de rodada e na idempotency_key o gate vai em minúsculas (g4, sampling); neste campo continua G4 / SAMPLING."
+    },
+    "operation": {
+      "enum": [
+        "approve_brief",
+        "approve_angle",
+        "approve_claims",
+        "publish",
+        "send",
+        "run_ads",
+        "update_page",
+        "internal_use"
+      ]
+    },
+    "destination": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Destino exato da operação (ferramenta, página ou uso interno). Fora do hash; copiado em approval-decision.bound_to e comparado por igualdade no preflight (divergência é VETO)."
+    },
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canal da operação (ex.: landing_page, email, paid_ads, social_organic). Use 'internal' em G1, G2, G3 de oferta e SAMPLING. Fora do hash; copiado em approval-decision.bound_to e comparado por igualdade no preflight (divergência é VETO)."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Conteúdo exato que será aprovado e posteriormente executado; imutável após a aprovação. Em G4 traz draft_id = {asset_id}-v{n} (versão exata do draft aprovado)."
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hexadecimal (minúsculo, 64 caracteres) de json.dumps(payload, sort_keys=True, separators=(',',':'), ensure_ascii=False).encode('utf-8'). Cobre somente approval-request.payload; destination, channel e operation não entram no hash e são comparados por igualdade no preflight (divergência é VETO). Sem NFC nem normalização de quebra de linha. Calculado por scripts/approval_tools.py hash, nunca de cabeça por um modelo."
+    },
+    "risk_level": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "policy_applied": {
+      "type": "string",
+      "description": "Referência da regra de data/risk-policy.yaml aplicada (ex.: risco alto por claim de preço)"
+    },
+    "reviews": {
+      "type": "object",
+      "required": [],
+      "additionalProperties": false,
+      "properties": {
+        "edit_report_id": {
+          "type": "string"
+        },
+        "brand_review_id": {
+          "type": "string"
+        },
+        "compliance_review_id": {
+          "type": "string"
+        }
+      }
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "Agente solicitante (normalmente copy-publisher)"
+    },
+    "approver_role": {
+      "type": "string",
+      "description": "Papel humano que deve decidir"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Prazo de resposta = criação + 72 h. Passado o prazo sem decisão, o pedido continua pendente (silêncio nunca é aprovação) e o copy-chief reenvia ou escala."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^camp-[a-z0-9-]+:[a-z0-9-]+:(g[1-5]|sampling):r[1-9][0-9]*:[a-f0-9]{12}$",
+      "description": "Chave que impede execução duplicada: {campaign_id}:{asset_id}:{gate em minúsculas}:r{n}:{12 primeiros hex do payload_sha256}. Em gates de campanha asset_id = campaign_id. Ex.: camp-fluxo-caixa-lancamento:cvc-lp-mentoria:g4:r1:ee95da7e2920."
+    },
+    "audit_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "actor",
+          "action"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "gate": {
+            "const": "G4"
+          }
+        },
+        "required": [
+          "gate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "draft_id"
+            ],
+            "properties": {
+              "draft_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*-v[1-9][0-9]*$",
+                "description": "{asset_id}-v{n}: versão exata do draft que será executado."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

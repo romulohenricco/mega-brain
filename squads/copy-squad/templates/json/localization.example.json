@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "loc-exemplo-v1",
+    "artifact_type": "localization",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "localization-specialist",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "source_copy_id": "cvc-exemplo-v1",
+  "source_locale": "pt-BR",
+  "target_locale": "en-US",
+  "localized_sections": [
+    {
+      "section": "hero",
+      "text": "Example headline"
+    }
+  ],
+  "adaptation_notes": [
+    {
+      "original": "original",
+      "adapted": "adapted",
+      "reason": "motivo"
+    }
+  ],
+  "cultural_flags": [],
+  "untranslatable_terms": [],
+  "requires_compliance_recheck": true
+}

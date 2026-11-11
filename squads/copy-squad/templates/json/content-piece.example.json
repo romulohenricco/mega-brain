@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "cnt-exemplo-v1",
+    "artifact_type": "content-piece",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "content-copywriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "brief_id": "brf-exemplo",
+  "format": "article",
+  "title": "Título de exemplo",
+  "thesis": "Tese de exemplo",
+  "outline": [
+    "Introdução",
+    "Desenvolvimento",
+    "Conclusão"
+  ],
+  "body": "Corpo de exemplo.",
+  "cta": "CTA de exemplo",
+  "seo": {
+    "primary_keyword": "palavra-chave",
+    "secondary_keywords": [
+      "secundária"
+    ],
+    "meta_title": "Título SEO",
+    "meta_description": "Descrição SEO de exemplo.",
+    "search_intent": "informational"
+  },
+  "needs_expert_review": []
+}

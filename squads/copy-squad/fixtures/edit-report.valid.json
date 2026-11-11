@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "edt-lp-mentoria-v2",
+    "artifact_type": "edit-report",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-editor",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.84,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "original_copy_id": "cvc-lp-mentoria-v2",
+  "edited_sections": [
+    {
+      "section": "hero",
+      "text": "Saiba quanto dinheiro sua empresa terá no fim do mês. Mentoria de gestão financeira para pequenas empresas."
+    },
+    {
+      "section": "problema",
+      "text": "Você fecha o mês sem saber se o lucro apareceu? Decidir pelo saldo do banco gera surpresas."
+    }
+  ],
+  "changes": [
+    {
+      "type": "cut",
+      "before": "Saiba hoje quanto dinheiro sua empresa terá no fim do mês.",
+      "after": "Saiba quanto dinheiro sua empresa terá no fim do mês.",
+      "reason": "Remoção de 'hoje', que sugere resultado imediato não comprovado."
+    },
+    {
+      "type": "rewrite",
+      "before": "Misturar contas pessoais e da empresa e decidir olhando o saldo do banco costuma gerar surpresas desagradáveis.",
+      "after": "Decidir pelo saldo do banco gera surpresas.",
+      "reason": "Concisão; ideia central preservada."
+    },
+    {
+      "type": "clarity",
+      "before": "que querem sair do improviso",
+      "after": "(removido)",
+      "reason": "Expressão vaga; o benefício já está na frase anterior."
+    }
+  ],
+  "word_count_before": 62,
+  "word_count_after": 44,
+  "reduction_pct": 29.0,
+  "preserved_claims": true,
+  "remaining_risks": [
+    "Seção de oferta ainda com preço e garantia pendentes de aprovação"
+  ],
+  "escalations": [
+    "Encaminhar claim 'Método em 4 etapas' ao compliance-checker"
+  ],
+  "quality_score": 86
+}

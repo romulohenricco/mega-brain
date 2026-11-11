@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "vid-reel-caixa-v1",
+    "artifact_type": "video-script",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "video-social-scriptwriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.78,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "brief_id": "brf-mentoria-fluxo-caixa",
+  "format": "reel",
+  "platform": "instagram",
+  "duration_seconds": 30,
+  "hook": "Sua empresa lucrou, mas o dinheiro sumiu? Isso tem explicação.",
+  "script": [
+    {
+      "time": "0-3s",
+      "voiceover": "Sua empresa lucrou, mas o dinheiro sumiu? Isso tem explicação.",
+      "on_screen_text": "Lucro não é caixa",
+      "visual_direction": "Close no rosto, olhando para a câmera; corte seco."
+    },
+    {
+      "time": "3-12s",
+      "voiceover": "Lucro é o resultado do mês. Caixa é quando o dinheiro entra e sai. As duas coisas quase nunca coincidem.",
+      "on_screen_text": "Lucro x Caixa",
+      "visual_direction": "Duas colunas animadas na tela."
+    },
+    {
+      "time": "12-24s",
+      "voiceover": "Comece anotando, toda semana, o que entra, o que sai e quanto sobra projetado.",
+      "on_screen_text": "Entra · Sai · Sobra",
+      "visual_direction": "Planilha simples em tela, três colunas sendo preenchidas."
+    },
+    {
+      "time": "24-30s",
+      "voiceover": "Quer ajuda para montar o seu? Link na bio.",
+      "on_screen_text": "Link na bio",
+      "visual_direction": "Retorno ao rosto, gesto apontando para cima."
+    }
+  ],
+  "cta": "Link na bio",
+  "caption": "Lucro não é caixa. Anote toda semana o que entra, o que sai e quanto sobra.",
+  "variations": [
+    "Hook alternativo: Você sabe quanto vai ter em caixa daqui a 30 dias?"
+  ],
+  "claims": []
+}

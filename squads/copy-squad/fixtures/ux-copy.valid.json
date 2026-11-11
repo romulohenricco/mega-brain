@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "uxc-onboarding-fluxo-v1",
+    "artifact_type": "ux-copy",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "ux-writer",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.85,
+    "risk_level": "low",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "surface": "onboarding",
+  "context": "Primeira tela do aplicativo de fluxo de caixa (SaaS), após o cadastro, antes de conectar a conta bancária.",
+  "copy": [
+    {
+      "element": "titulo",
+      "text": "Vamos montar o seu fluxo de caixa",
+      "character_limit": 40
+    },
+    {
+      "element": "descricao",
+      "text": "Leva cerca de 5 minutos. Você pode editar tudo depois.",
+      "character_limit": 80
+    },
+    {
+      "element": "botao-primario",
+      "text": "Começar",
+      "character_limit": 16,
+      "accessibility_note": "Rótulo curto e verbo no imperativo; leitor de tela anuncia como botão."
+    },
+    {
+      "element": "botao-secundario",
+      "text": "Fazer isso depois",
+      "character_limit": 24
+    },
+    {
+      "element": "erro-campo-vazio",
+      "text": "Informe o saldo atual para continuar.",
+      "character_limit": 60,
+      "accessibility_note": "Associar a mensagem ao campo com aria-describedby."
+    }
+  ],
+  "glossary_terms_used": [
+    "fluxo de caixa",
+    "saldo projetado"
+  ]
+}

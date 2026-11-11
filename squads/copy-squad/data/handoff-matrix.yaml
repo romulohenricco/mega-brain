@@ -1,0 +1,542 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Matriz de handoffs do Copy Squad: todas as arestas from → to com o contrato
+    transportado, a condição para o handoff acontecer e o gate (humano ou
+    automático) que o protege. É a fonte de verdade para o campo handoff_to dos
+    agentes e para a validação de ciclos (AP03).
+  created_at: "2026-11-10"
+
+envelope:
+  contract: contracts/handoff-envelope.schema.json
+  persisted_at: ".data/copy-squad/{business}/{campaign_id}/handoffs.jsonl"
+  mode: append_only
+  required_fields: [envelope_id, campaign_id, business, from_agent, to_agent, input_ids, output_id, artifact_type, artifact_path, status, confidence, risk_level, human_approval_required, created_at]
+  optional_fields: [assumptions, sources, gate, reason]
+  rules:
+    - "Cada agente recebe só os campos de que precisa (via input_ids e artifact_path) e entrega um envelope; isso reduz contaminação de contexto e permite trocar um agente sem quebrar o pipeline."
+    - "status needs_input devolve ao agente anterior ou ao solicitante com até 5 perguntas; status blocked para o fluxo; status failed aciona retry (RETRY_ON_TOOL_FAILURE) e escalonamento."
+    - "human_approval_required = true sempre que o gate humano da aresta está ativo (gate definido e, quando existir, gate_when satisfeito); com gate_when não satisfeito a aresta segue apenas com o quality_gate. O próximo agente só é habilitado depois de approval-decision válido."
+    - "Todo envelope é gravado antes do próximo agente iniciar; ausência de envelope é falha de processo."
+    - "O agente receptor valida o contrato recebido contra o schema; entrada inválida vira envelope de retorno (rework) sem tentativa de correção silenciosa."
+  status_values: [ready, needs_input, needs_approval, blocked, failed]
+  gate_values: [G1, G2, G3, G4, G5, SAMPLING, null]
+  gate_values_note: "SAMPLING é valor de approval-request.gate (amostragem de risco low, D5) e também é aceito no campo gate de handoff-envelope e de execution-plan.steps[] (E3); G5 não usa approval-request."
+
+
+# ============================================================================
+# Arestas diretas (fluxo principal)
+# Campos: id, from, to, contract, artifact_path, condition, gate (humano), quality_gate, kind
+# ============================================================================
+edges:
+
+  # ---- Comando ------------------------------------------------------------
+  - id: E01
+    from: copy-chief
+    to: brief-master
+    contract: demand-intake
+    also_carries: [execution-plan]
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/00-intake/demand-intake.json"
+    condition: "Intake com demand_type e objetivo definidos; perguntas respondidas ou lacunas registradas; plano emitido."
+    gate: null
+    quality_gate: QG-INTAKE
+    kind: forward
+  - id: E02
+    from: copy-chief
+    to: copy-publisher
+    contract: brief
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json"
+    condition: "Brief consolidado aprovado em QG-BRIEF e risco medium ou high (G1 obrigatório; o copy-chief entrega o brief ao copy-publisher para montar o pedido); em risco high ou com claim sensível o G3 de oferta (preço, garantia, provas e depoimentos do offer-canvas) segue no mesmo pacote (D10)."
+    gate: G1
+    gate_when: "risk_level in [medium, high]; em risco low não há G1 (D11)."
+    note: "Caminho do G1 (E3): copy-chief (QG-BRIEF aprovado) → copy-publisher (prepare-approval-package) → approval-owner (E34). Nenhum produtor envia direto ao approval-owner. O approval-request (approve_brief, e approve_claims no G3 de oferta) é produzido exclusivamente pelo copy-publisher, em 06-approval/_campaign/g1-r{n}/ (e g3-r{n}/), com asset_id = campaign_id."
+    quality_gate: QG-BRIEF
+    kind: forward
+  - id: E03
+    from: copy-chief
+    to: approval-owner
+    contract: handoff-envelope
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/handoffs.jsonl"
+    condition: "Escalonamento: VETO por risco, claim ou decisão estratégica; rework esgotado em item de risco; conflito entre agentes."
+    gate: null
+    quality_gate: null
+    kind: escalation
+  - id: E04
+    from: copy-chief
+    to: copy-publisher
+    contract: execution-plan
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/00-intake/execution-plan.json"
+    condition: "Todos os quality gates aprovados para o ativo e empacotamento autorizado pelo copy-chief (pacotes de G1, G2, G3, G4 ou de amostragem, quando exigidos pela risk-policy). Ativo de risco low sorteado fora de amostragem não chega ao copy-publisher: low é só uso interno e nunca é publicado (D6)."
+    gate: null
+    quality_gate: QG-PUBLISH-PREFLIGHT
+    kind: forward
+
+  # ---- Estratégia ---------------------------------------------------------
+  - id: E05
+    from: brief-master
+    to: audience-voc
+    contract: brief
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json"
+    condition: "Brief v1 (rascunho) emitido e segmento identificado; faltam dados de público."
+    gate: null
+    quality_gate: null
+    kind: forward
+  - id: E06
+    from: brief-master
+    to: offer-strategist
+    contract: brief
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json"
+    condition: "Oferta precisa ser estruturada ou verificada (promessa, mecanismo, prova, preço, garantia)."
+    gate: null
+    quality_gate: null
+    kind: forward
+  - id: E07
+    from: brief-master
+    to: research-analyst
+    contract: brief
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json"
+    condition: "Brief v1 emitido; pesquisa necessária (mercado, concorrentes, linguagem do cliente, provas)."
+    gate: null
+    quality_gate: null
+    kind: forward
+  - id: E08
+    from: brief-master
+    to: hook-angle-creator
+    contract: brief
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/brief.json"
+    condition: "Brief final (vN) aprovado em QG-BRIEF e em G1 quando exigido; research-packet disponível ou dispensado no fast_lane."
+    gate: G1
+    gate_when: "risk_level in [medium, high]; em risco low a aresta segue só com QG-BRIEF."
+    quality_gate: QG-BRIEF
+    kind: forward
+  - id: E09
+    from: audience-voc
+    to: brief-master
+    contract: audience-voc
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/audience-voc.json"
+    condition: "Mapa de audiência pronto; dores, objeções e awareness_stage alimentam a consolidação do brief."
+    gate: null
+    quality_gate: null
+    kind: feedback
+  - id: E10
+    from: audience-voc
+    to: hook-angle-creator
+    contract: audience-voc
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/audience-voc.json"
+    condition: "customer_phrases e objeções disponíveis para inspirar ângulos."
+    gate: null
+    quality_gate: null
+    kind: forward
+  - id: E11
+    from: offer-strategist
+    to: brief-master
+    contract: offer-canvas
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/offer-canvas.json"
+    condition: "Oferta estruturada; itens em needs_approval sinalizados para a consolidação."
+    gate: null
+    quality_gate: null
+    kind: feedback
+  - id: E12
+    from: offer-strategist
+    to: hook-angle-creator
+    contract: offer-canvas
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/offer-canvas.json"
+    condition: "Promessa, mecanismo e pilha de provas disponíveis; o G3 de oferta (preço, garantia, provas, depoimentos) já foi aprovado antes da produção quando o risco é high ou há claim sensível (D10); claims não pré-aprovados permanecem needs_approval e vão ao G3 de texto após QG-COMPLIANCE (E32)."
+    gate: null
+    quality_gate: null
+    kind: forward
+  - id: E13
+    from: offer-strategist
+    to: conversion-copywriter
+    contract: offer-canvas
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/01-strategy/offer-canvas.json"
+    condition: "Ângulo aprovado; só claims pré-aprovados (G3 de oferta, D10) entram na copy; claims não pré-aprovados permanecem needs_approval e vão ao G3 de texto após QG-COMPLIANCE (E32)."
+    gate: null
+    quality_gate: QG-BRIEF
+    kind: forward
+  - id: E14
+    from: brand-voice-guardian
+    to: compliance-checker
+    contract: brand-review
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/brand-review-v{n}.json"
+    condition: "brand_alignment_score >= 80 e approved_for_next_stage = true; zero issue crítico aberto."
+    gate: null
+    quality_gate: QG-BRAND
+    kind: forward
+  - id: E15
+    from: brand-voice-guardian
+    to: copy-editor
+    contract: brand-review
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/brand-review-v{n}.json"
+    condition: "REVIEW em QG-BRAND: issues com revisão mínima sugerida; o editor aplica, o guardian não reescreve."
+    gate: null
+    quality_gate: QG-BRAND
+    kind: rework
+
+  # ---- Pesquisa e ideação -------------------------------------------------
+  - id: E16
+    from: research-analyst
+    to: hook-angle-creator
+    contract: research-packet
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/02-research/research-packet.json"
+    condition: "QG-RESEARCH aprovado; confiança >= 0.60 ou lacunas aceitas pelo copy-chief."
+    gate: null
+    quality_gate: QG-RESEARCH
+    kind: forward
+  - id: E17
+    from: research-analyst
+    to: brief-master
+    contract: research-packet
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/02-research/research-packet.json"
+    condition: "Pesquisa revela lacuna do brief, contradição de fato ou oportunidade que muda o objetivo ou o público (gaps)."
+    gate: null
+    quality_gate: null
+    kind: feedback
+  - id: E18
+    from: hook-angle-creator
+    to: copy-chief
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Shortlist de 5 ângulos entregue ao copy-chief, executor do QG-ANGLES (mínimo de 20 ângulos nos workflows completos). Com QG-ANGLES aprovado e risco high ou campanha multi-ativo, o copy-chief encaminha ao copy-publisher (E44) para o pedido de G2."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos)."
+    note: "Caminho do G2 (E3): hook-angle-creator → copy-chief (QG-ANGLES) → copy-publisher (prepare-approval-package, E44) → approval-owner (E34). Nenhum produtor envia direto ao approval-owner. O approval-request (approve_angle) é produzido exclusivamente pelo copy-publisher, em 06-approval/_campaign/g2-r{n}/, com asset_id = campaign_id."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E44
+    from: copy-chief
+    to: copy-publisher
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "QG-ANGLES aprovado pelo copy-chief e risco high ou campanha multi-ativo: o copy-publisher monta o pedido de G2 (approve_angle, shortlist de 5 ângulos) via prepare-approval-package."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos)."
+    note: "Segundo passo do caminho do G2 (E3); o pedido segue ao approval-owner pela E34, em 06-approval/_campaign/g2-r{n}/ com asset_id = campaign_id."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E19
+    from: hook-angle-creator
+    to: conversion-copywriter
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Ângulo aprovado (G2 quando exigido; senão QG-ANGLES) para peça de conversão."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos); caso contrário apenas QG-ANGLES."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E20
+    from: hook-angle-creator
+    to: content-copywriter
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Ângulo aprovado para conteúdo (artigo, newsletter, post, carrossel, guia)."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos); caso contrário apenas QG-ANGLES."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E21
+    from: hook-angle-creator
+    to: video-social-scriptwriter
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Ângulo aprovado para vídeo ou social."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos); caso contrário apenas QG-ANGLES."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E22
+    from: hook-angle-creator
+    to: email-crm-copywriter
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Ângulo aprovado para e-mail ou jornada de CRM."
+    gate: G2
+    gate_when: "risk_level == high OR campanha multi-ativo (2+ ativos); caso contrário apenas QG-ANGLES."
+    quality_gate: QG-ANGLES
+    kind: forward
+  - id: E23
+    from: hook-angle-creator
+    to: ux-writer
+    contract: angles
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/03-angles/angles.json"
+    condition: "Demanda de produto/UX com tese de mensagem aprovada."
+    gate: null
+    quality_gate: QG-ANGLES
+    kind: forward
+
+  # ---- Produção → Edição --------------------------------------------------
+  - id: E24
+    from: conversion-copywriter
+    to: copy-editor
+    contract: conversion-copy
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json"
+    condition: "QG-DRAFT aprovado; draft salvo como nova versão; claims sem prova em needs_approval."
+    gate: null
+    quality_gate: QG-DRAFT
+    kind: forward
+  - id: E25
+    from: content-copywriter
+    to: copy-editor
+    contract: content-piece
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json"
+    condition: "QG-DRAFT aprovado; fontes citadas."
+    gate: null
+    quality_gate: QG-DRAFT
+    kind: forward
+  - id: E26
+    from: ux-writer
+    to: copy-editor
+    contract: ux-copy
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json"
+    condition: "QG-DRAFT aprovado; limites de caractere verificados."
+    gate: null
+    quality_gate: QG-DRAFT
+    kind: forward
+  - id: E27
+    from: video-social-scriptwriter
+    to: copy-editor
+    contract: video-script
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json"
+    condition: "QG-DRAFT aprovado; duração e plataforma conferidas."
+    gate: null
+    quality_gate: QG-DRAFT
+    kind: forward
+  - id: E28
+    from: email-crm-copywriter
+    to: copy-editor
+    contract: email-journey
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/04-drafts/{asset_id}/v{n}.json"
+    condition: "QG-DRAFT aprovado; consent_basis presente."
+    gate: null
+    quality_gate: QG-DRAFT
+    kind: forward
+  - id: E29
+    from: copy-editor
+    to: brand-voice-guardian
+    contract: edit-report
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/edit-report-v{n}.json"
+    condition: "QG-EDIT aprovado; preserved_claims = true e quality_score >= 80."
+    gate: null
+    quality_gate: QG-EDIT
+    kind: forward
+
+  # ---- Localização e conformidade -----------------------------------------
+  - id: E30
+    from: compliance-checker
+    to: localization-specialist
+    contract: compliance-review
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/compliance-review-v{n}.json"
+    condition: "Peça aprovada na origem e plano com target_locale; só a versão aprovada pode ser localizada."
+    gate: null
+    quality_gate: QG-COMPLIANCE
+    kind: forward
+  - id: E31
+    from: localization-specialist
+    to: compliance-checker
+    contract: localization
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/localization-{locale}-v{n}.json"
+    condition: "Localização entregue; requires_compliance_recheck = true ou claims presentes."
+    gate: null
+    quality_gate: QG-LOCALIZATION
+    kind: forward
+  - id: E32
+    from: compliance-checker
+    to: copy-publisher
+    contract: compliance-review
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/compliance-review-v{n}.json"
+    condition: "approved = true e overall_risk != blocked; claim que apareça na copy final sem pré-aprovação (needs_approval) ou claim sensível segue ao copy-publisher para o pacote de G3 de texto, antes do G4 (D10)."
+    gate: G3
+    gate_when: "Quando existir claim_type sensível, claim data_privacy, urgência ou escassez, ou claim novo sem pré-aprovação."
+    quality_gate: QG-COMPLIANCE
+    kind: forward
+  - id: E33
+    from: compliance-checker
+    to: copy-chief
+    contract: compliance-review
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/05-review/{asset_id}/compliance-review-v{n}.json"
+    condition: "overall_risk = blocked, REVIEW com correções exigidas ou requires_legal_review = true; o copy-chief roteia a correção ao produtor."
+    gate: null
+    quality_gate: QG-COMPLIANCE
+    kind: escalation
+
+  # ---- Aprovação e publicação ---------------------------------------------
+  - id: E34
+    from: copy-publisher
+    to: approval-owner
+    contract: approval-request
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-request.json"
+    alt_artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/_campaign/{gate}-r{n}/approval-request.json (G1, G2 e G3 de oferta; asset_id = campaign_id; {gate} em minúsculas: g1-r1, g2-r1, g3-r1)"
+    condition: "Pacote completo: payload, payload_sha256 calculado por approval_tools.py hash, política aplicada, revisões anexas, expiração (criação + 72h, prazo de resposta), channel (internal em G1, G2, G3 de oferta e amostragem) e idempotency_key {campaign_id}:{asset_id}:{gate em minúsculas}:r{n}:{12 primeiros hex do payload_sha256}. O copy-publisher é o produtor único de approval-request para G1 (approve_brief), G2 (approve_angle), G3 (approve_claims), G4 (publish, send, run_ads, update_page) e amostragem (gate SAMPLING, operation internal_use, em 06-approval/{asset_id}/sampling-r{n}/) (D5)."
+    gate: G4
+    gate_when: "O gate do pacote: G1 em risk medium ou high; G2 em risk high ou campanha multi-ativo; G3 quando houver claim sensível, data_privacy ou urgência/escassez (de oferta antes da produção, de texto após o compliance); G4 em toda ação externa; SAMPLING para a amostra de risco low."
+    quality_gate: null
+    kind: human_gate
+  - id: E35
+    from: approval-owner
+    to: copy-publisher
+    contract: approval-decision
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-decision.json"
+    alt_artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/_campaign/{gate}-r{n}/approval-decision.json (G1, G2 e G3 de oferta); a decisão vive sempre na mesma pasta de rodada do pedido (E3)"
+    condition: "decision == approved, human_attested true, bound_to igual a gate, operation, destination e channel do pedido (E1), recorded_via human-cli ou human-chat-confirmed, payload_sha256 igual ao do pedido e ao hash recalculado, now < decision.expires_at (decided_at + 72h). approved_with_edits NÃO habilita execução (D2): o envelope só devolve ao copy-publisher para aplicar as edições e abrir a rodada seguinte ({gate}-r{n+1}); rejected volta à fase indicada nos comentários."
+    gate: G4
+    quality_gate: QG-PUBLISH-PREFLIGHT
+    kind: human_gate
+  - id: E36
+    from: approval-owner
+    to: knowledge-curator
+    contract: approval-decision
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/{asset_id}/{gate}-r{n}/approval-decision.json"
+    alt_artifact_path: ".data/copy-squad/{business}/{campaign_id}/06-approval/_campaign/{gate}-r{n}/approval-decision.json (G1, G2 e G3 de oferta)"
+    condition: "Decisão G1 a G4 registrada (aprovação, edição ou reprovação) para o knowledge-curator extrair aprendizado. No modo mvp o QG-LEARNING é dispensado (mvp_waivers) e o aprendizado fica em performance-analysis.next_actions."
+    gate: null
+    quality_gate: QG-LEARNING
+    kind: forward
+  - id: E45
+    from: approval-owner
+    to: knowledge-curator
+    contract: learning-record
+    artifact_path: ".data/copy-squad/{business}/_library/learnings/{lrn-id}.json"
+    condition: "Correção humana de output de agente (G5): sem approval-request, tasks/correct-agent-failure.md gera o learning-record (origin human_correction) a partir da correção aplicada."
+    gate: G5
+    gate_when: "Quando o humano corrigiu um output."
+    quality_gate: QG-LEARNING
+    kind: human_gate
+  - id: E42
+    from: copy-publisher
+    to: copy-chief
+    contract: handoff-envelope
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/handoffs.jsonl"
+    condition: "Preflight do copy-publisher concluído (D8): saída de approval_tools.py verify registrada no envelope (hash recalculado = pedido = decisão; decision == approved; now < decision.expires_at; human_attested; recorded_via; reviewer em human_gates.approvers; destination, channel e operation iguais ao que será executado; bound_to == pedido; verify --for-execution com --payload do conteúdo a executar). O preflight é pós-decisão e antecede qualquer execução (E4)."
+    gate: null
+    quality_gate: QG-PUBLISH-PREFLIGHT
+    kind: forward
+  - id: E43
+    from: copy-chief
+    to: copy-publisher
+    contract: handoff-envelope
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/handoffs.jsonl"
+    condition: "Preflight contra-assinado pelo copy-chief (executor do QG-PUBLISH-PREFLIGHT): execução liberada. O copy-chief reexecuta verify --for-execution sem flags de teste ao contra-assinar (counter_signed_by copy-chief). A execução é do humano ou da sessão principal (PUBLISH_EXECUTORS = [human, main_session]); nenhum subagent executa ação externa. Sem contra-assinatura, nada é executado (D8)."
+    gate: null
+    quality_gate: QG-PUBLISH-PREFLIGHT
+    kind: forward
+  - id: E37
+    from: copy-publisher
+    to: cro-analyst
+    contract: publish-receipt
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/07-published/{asset_id}/publish-receipt.json"
+    condition: "outcome published, scheduled ou handed_off; janela de performance iniciada (PERFORMANCE_WINDOW_DAYS)."
+    gate: null
+    quality_gate: QG-PUBLISH-PREFLIGHT
+    kind: forward
+  - id: E38
+    from: copy-publisher
+    to: knowledge-curator
+    contract: publish-receipt
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/07-published/{asset_id}/publish-receipt.json"
+    condition: "Ativo publicado; versão final e metadados prontos para a biblioteca."
+    gate: null
+    quality_gate: null
+    kind: forward
+
+  # ---- Inteligência e aprendizado -----------------------------------------
+  - id: E39
+    from: cro-analyst
+    to: knowledge-curator
+    contract: performance-analysis
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/08-performance/performance-analysis-{yyyymmdd}-{n}.json"
+    condition: "Análise concluída com critério de decisão; findings e hipóteses para registrar como aprendizado."
+    gate: null
+    quality_gate: QG-LEARNING
+    kind: forward
+  - id: E40
+    from: cro-analyst
+    to: copy-chief
+    contract: performance-analysis
+    artifact_path: ".data/copy-squad/{business}/{campaign_id}/08-performance/performance-analysis-{yyyymmdd}-{n}.json"
+    condition: "Hipóteses priorizadas e next_actions que pedem nova rodada (wf-performance-loop) ou decisão de prioridade."
+    gate: null
+    quality_gate: null
+    kind: feedback
+  - id: E41
+    from: knowledge-curator
+    to: copy-chief
+    contract: knowledge-query-result
+    also_carries: [learning-record]
+    artifact_path: ".data/copy-squad/{business}/_library/index.jsonl"
+    alt_artifact_path: "knowledge-query-result em .data/copy-squad/{business}/{campaign_id}/00-intake/knowledge-query-{n}.json (com campanha) ou .data/copy-squad/{business}/_library/queries/ (sem campanha)"
+    condition: "Consulta respondida ou aprendizado registrado e aprovado em QG-LEARNING; o copy-chief injeta o contexto no plano da próxima campanha."
+    gate: null
+    quality_gate: QG-LEARNING
+    kind: feedback
+
+# ============================================================================
+# Laços de retrabalho (únicos ciclos permitidos — AP03)
+# ============================================================================
+rework_loops:
+  rule: "Retrabalho volta ao produtor do artefato reprovado, pelo executor do gate, no máximo REWORK_MAX_CYCLES (2) vezes; depois escala ao copy-chief."
+  loops:
+    - {gate: QG-INTAKE,         from: brief-master,        to: copy-chief,                  max_cycles: 2}
+    - {gate: QG-BRIEF,          from: copy-chief,          to: brief-master,                max_cycles: 2}
+    - {gate: QG-RESEARCH,       from: compliance-checker,  to: research-analyst,            max_cycles: 2}
+    - {gate: QG-ANGLES,         from: copy-chief,          to: hook-angle-creator,          max_cycles: 2}
+    - {gate: QG-DRAFT,          from: copy-chief,          to: "produtor do contrato",      max_cycles: 2}
+    - {gate: QG-EDIT,           from: copy-chief,          to: copy-editor,                 max_cycles: 2}
+    - {gate: QG-BRAND,          from: brand-voice-guardian, to: copy-editor,                max_cycles: 2}
+    - {gate: QG-COMPLIANCE,     from: compliance-checker,  to: copy-chief,                  max_cycles: 2, note: "o copy-chief roteia ao produtor; o compliance não reescreve"}
+    - {gate: QG-LOCALIZATION,   from: compliance-checker,  to: localization-specialist,     max_cycles: 2}
+    - {gate: QG-PUBLISH-PREFLIGHT, from: copy-chief,       to: copy-publisher,              max_cycles: 2}
+    - {gate: QG-LEARNING,       from: cro-analyst,         to: knowledge-curator,           max_cycles: 2}
+  on_exhausted: "Escalar ao copy-chief (E03 quando houver risco ou decisão estratégica)."
+  reasons_for_rework_envelope: "status needs_input ou blocked com reason específica e lista de critérios reprovados."
+
+preflight_loop:
+  description: "Par de requisição e resposta do preflight em dois passos, pós-decisão (D8, E4): copy-publisher roda approval_tools.py verify e envia o resultado (E42); o copy-chief contra-assina e libera (E43)."
+  edges: [E42, E43]
+  note: "AP03 não se aplica: é validação do mesmo artefato por executor diferente (AP05), sem dependência circular de execução."
+
+cross_campaign_loop:
+  description: "O aprendizado de uma campanha alimenta a seguinte; o ciclo cruza instâncias, nunca a mesma instância."
+  path: [cro-analyst, knowledge-curator, copy-chief, brief-master]
+  edges: [E39, E41]
+  note: "AP03 não se aplica porque o brief da campanha seguinte é uma nova instância (novo campaign_id)."
+
+# ============================================================================
+# Visão por agente (derivada das arestas; usada para handoff_to nos agentes)
+# ============================================================================
+handoff_to_by_agent:
+  copy-chief: [brief-master, copy-publisher, approval-owner]
+  brief-master: [audience-voc, offer-strategist, research-analyst, hook-angle-creator]
+  audience-voc: [brief-master, hook-angle-creator]
+  offer-strategist: [brief-master, hook-angle-creator, conversion-copywriter]
+  brand-voice-guardian: [compliance-checker, copy-editor]
+  research-analyst: [hook-angle-creator, brief-master]
+  hook-angle-creator: [conversion-copywriter, content-copywriter, video-social-scriptwriter, email-crm-copywriter, ux-writer, copy-chief]
+  conversion-copywriter: [copy-editor]
+  content-copywriter: [copy-editor]
+  ux-writer: [copy-editor]
+  video-social-scriptwriter: [copy-editor]
+  email-crm-copywriter: [copy-editor]
+  localization-specialist: [compliance-checker]
+  copy-editor: [brand-voice-guardian]
+  compliance-checker: [copy-publisher, localization-specialist, copy-chief]
+  cro-analyst: [knowledge-curator, copy-chief]
+  knowledge-curator: [copy-chief]
+  copy-publisher: [approval-owner, copy-chief, cro-analyst, knowledge-curator]
+  approval-owner: [copy-publisher, knowledge-curator]
+
+# ============================================================================
+# Invariantes
+# ============================================================================
+invariants:
+  - "Nenhuma aresta leva um artefato a copy-publisher sem passar por compliance-checker (E32) e por aprovação humana exigida pela risk-policy (E34 e E35)."
+  - "Nenhum agente de IA aparece como origem de approval-decision."
+  - "Toda aresta forward para produção carrega um ângulo aprovado ou um brief aprovado em QG-BRIEF."
+  - "copy-editor é o único destino de drafts de produção (E24 a E28); nenhum draft vai direto a brand-voice-guardian ou compliance-checker."
+  - "A localização parte sempre da versão aprovada na origem (E30) e volta ao compliance (E31) antes de G3 e G4."
+  - "O copy-publisher é o único agente que gera approval-request (E34) e o único que recebe approval-decision para execução (E35)."
+  - "O G3 tem dois momentos (D10): G3 de oferta antes da produção, no mesmo pacote do G1 quando o risco é high ou há claim sensível (arestas E02 e E12/E13 só carregam o aviso, o pedido é do copy-publisher); G3 de texto depois de QG-COMPLIANCE (E32) e antes do G4, para claim da copy final sem pré-aprovação. Redator só usa claim pré-aprovado."
+  - "approved_with_edits nunca habilita execução (D2): E35 só devolve ao copy-publisher para aplicar as edições e abrir a rodada seguinte."
+  - "Caminho dos gates de campanha (E3): G1 e G2 chegam ao approval-owner somente por copy-chief → copy-publisher → approval-owner (E02/E44/E34 e E18); nenhum produtor envia direto ao approval-owner."
+  - "Preflight em dois passos, pós-decisão (D8, E4): copy-publisher roda approval_tools.py verify (E42) e o copy-chief contra-assina (E43) antes de qualquer execução externa."
+  - "Gates humanos G1 e G2 dependem do risco (D11): arestas com gate_when só exigem human_approval_required quando a condição é satisfeita."

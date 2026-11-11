@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "cvc-lp-mentoria-v2",
+    "artifact_type": "conversion-copy",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "conversion-copywriter",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.74,
+    "risk_level": "high",
+    "assumptions": [
+      "Exemplo ilustrativo: dados fictícios sem relação com clientes reais."
+    ]
+  },
+  "brief_id": "brf-mentoria-fluxo-caixa",
+  "angle_id": "ang-controle-sem-planilha-eterna",
+  "format": "landing_page",
+  "awareness_stage": "problem_aware",
+  "sections": [
+    {
+      "section": "hero",
+      "copy": "Saiba hoje quanto dinheiro sua empresa terá no fim do mês. Mentoria de gestão financeira para pequenas empresas que querem sair do improviso.",
+      "cta": "Quero conhecer a mentoria"
+    },
+    {
+      "section": "problema",
+      "copy": "Você fecha o mês sem saber se o lucro apareceu de verdade? Misturar contas pessoais e da empresa e decidir olhando o saldo do banco costuma gerar surpresas desagradáveis."
+    },
+    {
+      "section": "mecanismo",
+      "copy": "Em encontros semanais, você monta um fluxo de caixa simples, aprende a projetar as próximas semanas e define regras claras de retirada.",
+      "claims": [
+        "Método em 4 etapas para organizar o fluxo de caixa"
+      ],
+      "needs_approval": [
+        "Descrição do método em 4 etapas precisa ser confirmada pelo responsável da oferta"
+      ]
+    },
+    {
+      "section": "prova",
+      "copy": "[Espaço reservado: depoimento real com autorização de uso — pendente]",
+      "proof_used": [
+        "prv-pendente-depoimento"
+      ],
+      "needs_approval": [
+        "Nenhum depoimento verificado disponível; não publicar sem prova autorizada"
+      ]
+    },
+    {
+      "section": "oferta",
+      "copy": "Mentoria de 12 semanas com encontros ao vivo e modelo de fluxo de caixa. Valor e condições: [pendente de aprovação do responsável pela oferta].",
+      "claims": [
+        "Mentoria de 12 semanas"
+      ],
+      "needs_approval": [
+        "Preço e condições de pagamento",
+        "Garantia, se houver"
+      ]
+    },
+    {
+      "section": "cta-final",
+      "copy": "Agende uma conversa de diagnóstico e veja se a mentoria faz sentido para o seu momento.",
+      "cta": "Agendar conversa"
+    }
+  ],
+  "ctas": [
+    "Quero conhecer a mentoria",
+    "Agendar conversa"
+  ],
+  "variations": [
+    {
+      "variation_id": "var-hero-b",
+      "element": "headline",
+      "text": "Pare de adivinhar o caixa da sua empresa",
+      "hypothesis": "Linguagem de dor direta tende a reter mais visitantes com consciência do problema do que linguagem de benefício."
+    }
+  ],
+  "confidence": 0.74
+}

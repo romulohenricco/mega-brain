@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "pub-lp-mentoria-v2",
+    "artifact_type": "publish-receipt",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-publisher",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "published",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "asset_id": "cvc-lp-mentoria",
+  "approval_decision_id": "apd-lp-mentoria-v2",
+  "payload_sha256": "ee95da7e29203a1fbb8c1702f9f613e7d019448d1e886adddcb00cd655d52610",
+  "destination": "landing page da mentoria (CMS), publicação manual pelo responsável",
+  "channel": "landing_page",
+  "executed_by": "human",
+  "executed_at": "2026-11-10T17:00:00-03:00",
+  "external_reference": "exemplo-pagina-mentoria-v2",
+  "verification": {
+    "sha_match": true,
+    "approval_valid": true,
+    "not_expired": true,
+    "bound_match": true,
+    "verify_ok": true,
+    "counter_signed_by": "copy-chief",
+    "counter_signed_at": "2026-11-10T16:40:00-03:00"
+  },
+  "rollback_plan": "Restaurar a versão v1 da página no CMS e registrar o evento no journey log.",
+  "outcome": "published"
+}

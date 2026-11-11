@@ -1,0 +1,384 @@
+# Agent Registry — Copy Squad
+# Índice consolidado para descoberta e roteamento de agentes.
+# Fonte de verdade: config.yaml (agents:[]). Este arquivo deve refletir o mesmo conjunto.
+# Governança: docs/governance-decisions.md (ADR-001) prevalece em caso de conflito.
+
+squad: copy-squad
+version: 1.0.0
+total_agents: 19                    # 18 agentes de IA + 1 papel humano
+ai_agents: 18
+human_roles: 1
+type: functional
+entry_agent: copy-chief
+synced_at: "2026-11-10"
+
+specialists:
+
+  # ---------------------------------------------------------------- Comando
+  copy-chief:
+    id: copy-chief
+    tier: orchestrator
+    executor_type: Agent
+    nucleus: Comando
+    expertise: [intake-de-demanda, classificacao-de-risco, planejamento-de-workflow, roteamento, gestao-de-dependencias, escalonamento, avaliacao-de-agentes]
+    frameworks: [risk-policy, quality-gates, handoff-matrix, seniority-matrix]
+    best_for: [receber-demanda, escolher-workflow, montar-execution-plan, monitorar-pipeline, escalar-ao-humano, avaliar-agentes]
+    commands: ["@copy-squad--copy-chief", "/copy-squad"]
+    contracts: [demand-intake, execution-plan, handoff-envelope, agent-evaluation]
+    handoff_to: [brief-master, copy-publisher, approval-owner]
+    human_gates: []
+    note: "Entry point único do squad. Planeja e orquestra; não escreve copy final, não aprova claims e não publica."
+
+  # ------------------------------------------------------------- Estratégia
+  brief-master:
+    id: brief-master
+    tier: tier_0
+    executor_type: Agent
+    nucleus: Estratégia
+    expertise: [briefing, criterios-de-aceite, kpi, separacao-fato-hipotese, perguntas-bloqueantes]
+    frameworks: [brief-operacional, awareness-stages]
+    best_for: [criar-brief, consolidar-brief, fechar-lacunas, definir-criterios-de-aceite]
+    commands: ["@copy-squad--brief-master"]
+    contracts: [brief]
+    handoff_to: [audience-voc, offer-strategist, research-analyst, hook-angle-creator]
+    human_gates: [G1]
+
+  audience-voc:
+    id: audience-voc
+    tier: tier_0
+    executor_type: Agent
+    nucleus: Estratégia
+    expertise: [icp, jobs-to-be-done, voice-of-customer, mapa-de-objecoes, estagio-de-consciencia]
+    frameworks: [jtbd, awareness-stages, taxonomia-de-objecoes]
+    best_for: [mapear-audiencia, extrair-voz-do-cliente, mapear-dores-e-desejos, banco-de-frases-reais]
+    commands: ["@copy-squad--audience-voc"]
+    contracts: [audience-voc]
+    handoff_to: [brief-master, hook-angle-creator]
+    human_gates: []
+
+  offer-strategist:
+    id: offer-strategist
+    tier: tier_0
+    executor_type: Agent
+    nucleus: Estratégia
+    expertise: [proposta-de-valor, posicionamento, oferta, pilha-de-provas, objecoes, urgencia-legitima, reversao-de-risco]
+    frameworks: [offer-canvas, messaging-house, proof-stack]
+    best_for: [estruturar-oferta, mapear-objecoes, montar-pilha-de-provas, definir-posicionamento-competitivo]
+    commands: ["@copy-squad--offer-strategist"]
+    contracts: [offer-canvas]
+    handoff_to: [brief-master, hook-angle-creator, conversion-copywriter]
+    human_gates: [G3]
+    note: "Apresenta opções de preço, garantia e promessa; a decisão é do approval-owner."
+
+  brand-voice-guardian:
+    id: brand-voice-guardian
+    tier: tier_0
+    tier_secondary: tier_2
+    executor_type: Agent
+    nucleus: "Estratégia + Qualidade"
+    expertise: [voz-de-marca, tom-por-contexto, vocabulario, glossario, revisao-minima]
+    frameworks: [brand-voice-guide, brand-alignment-score]
+    best_for: [definir-voz, revisar-tom, detectar-desvios, proteger-vocabulario]
+    commands: ["@copy-squad--brand-voice-guardian"]
+    contracts: [brand-voice-guide, brand-review]
+    handoff_to: [compliance-checker, copy-editor]
+    human_gates: [G1]
+    note: "Define a voz (tier_0) e revisa peças (tier_2). Não reescreve fatos nem claims."
+
+  # --------------------------------------------------------------- Produção
+  research-analyst:
+    id: research-analyst
+    tier: tier_0
+    executor_type: Agent
+    nucleus: "Produção (pesquisa)"
+    expertise: [pesquisa-de-mercado, analise-competitiva, citacao-de-fontes, verificacao, lacunas]
+    frameworks: [research-packet, fact-inference-hypothesis]
+    best_for: [pesquisar-mercado, mapear-concorrentes, achar-angulos-do-mercado, levantar-provas]
+    commands: ["@copy-squad--research-analyst"]
+    contracts: [research-packet]
+    handoff_to: [hook-angle-creator, brief-master]
+    human_gates: []
+
+  hook-angle-creator:
+    id: hook-angle-creator
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [ideacao, angulos, hooks, headlines, promessa-e-mecanismo, ranking]
+    frameworks: [angle-bank, awareness-stages, predicted-strength]
+    best_for: [gerar-angulos, criar-hooks, ranquear-promessas, shortlist-para-aprovacao]
+    commands: ["@copy-squad--hook-angle-creator"]
+    contracts: [angles]
+    handoff_to: [conversion-copywriter, content-copywriter, video-social-scriptwriter, email-crm-copywriter, ux-writer, copy-chief]
+    human_gates: [G2]
+
+  conversion-copywriter:
+    id: conversion-copywriter
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [direct-response, landing-page, anuncios, e-mail-de-venda, ctas, objecoes]
+    frameworks: [AIDA, PAS, feature-to-benefit, direct-response]
+    best_for: [escrever-landing-page, variar-anuncios, otimizar-ctas, copy-de-venda]
+    commands: ["@copy-squad--conversion-copywriter"]
+    contracts: [conversion-copy]
+    handoff_to: [copy-editor]
+    human_gates: []
+    note: "Não produz VSL: roteiro de VSL é do video-social-scriptwriter (write-video-script, format vsl; ADR-001, D15)."
+
+  content-copywriter:
+    id: content-copywriter
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [artigos, newsletters, posts, carrosseis, guias, case-study, white-paper, manifesto, tagline, seo, repurposing]
+    frameworks: [estrutura-editorial, seo-search-intent, repurposing]
+    best_for: [escrever-conteudo, derivar-ativos, autoridade-de-marca, seo, manifesto-e-tagline, case-study-e-white-paper]
+    commands: ["@copy-squad--content-copywriter"]
+    contracts: [content-piece]
+    handoff_to: [copy-editor]
+    human_gates: []
+
+  ux-writer:
+    id: ux-writer
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [microcopy, onboarding, formularios, mensagens-de-erro, estados-vazios, acessibilidade]
+    frameworks: [ux-writing, glossario-de-produto]
+    best_for: [textos-de-interface, onboarding, erros-e-vazios, auditoria-de-ux-copy]
+    commands: ["@copy-squad--ux-writer"]
+    contracts: [ux-copy]
+    handoff_to: [copy-editor]
+    human_gates: []
+
+  video-social-scriptwriter:
+    id: video-social-scriptwriter
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [roteiro, hooks-de-video, retencao, reels, youtube, vsl, legendas]
+    frameworks: [retencao-3-segundos, estrutura-de-roteiro]
+    best_for: [roteiros-de-video, legendas, variacoes-para-teste, anuncio-em-video]
+    commands: ["@copy-squad--video-social-scriptwriter"]
+    contracts: [video-script]
+    handoff_to: [copy-editor]
+    human_gates: []
+
+  email-crm-copywriter:
+    id: email-crm-copywriter
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [crm, lifecycle, segmentacao, sequencias, reativacao, retencao, consentimento]
+    frameworks: [jornada-de-email, lifecycle]
+    best_for: [sequencias-de-email, mensagens-crm, reativacao, nutricao]
+    commands: ["@copy-squad--email-crm-copywriter"]
+    contracts: [email-journey]
+    handoff_to: [copy-editor]
+    human_gates: []
+
+  localization-specialist:
+    id: localization-specialist
+    tier: tier_1
+    executor_type: Agent
+    nucleus: Produção
+    expertise: [transcreacao, localizacao, adaptacao-cultural, glossario-por-mercado]
+    frameworks: [transcreation, locale-adaptation]
+    best_for: [localizar-copy, adaptar-mercado, notas-de-adaptacao]
+    commands: ["@copy-squad--localization-specialist"]
+    contracts: [localization]
+    handoff_to: [compliance-checker]
+    human_gates: []
+
+  # -------------------------------------------------------------- Qualidade
+  copy-editor:
+    id: copy-editor
+    tier: tier_2
+    executor_type: Agent
+    nucleus: Qualidade
+    expertise: [edicao, concisao, clareza, ritmo, estrutura, preservacao-de-claims]
+    frameworks: [edit-report, concision-20-40]
+    best_for: [editar-draft, cortar-20-40-por-cento, melhorar-clareza, log-de-mudancas]
+    commands: ["@copy-squad--copy-editor"]
+    contracts: [edit-report]
+    handoff_to: [brand-voice-guardian]
+    human_gates: []
+
+  compliance-checker:
+    id: compliance-checker
+    tier: tier_2
+    executor_type: Agent
+    nucleus: "Qualidade/Inteligência"
+    expertise: [fact-check, claims, publicidade, consumidor, lgpd, politicas-de-plataforma, risco-juridico]
+    frameworks: [claim-classification, epistemic-standards]
+    best_for: [checar-claims, verificar-fontes, bloquear-risco-critico, lgpd]
+    commands: ["@copy-squad--compliance-checker"]
+    contracts: [compliance-review]
+    handoff_to: [copy-publisher, localization-specialist, copy-chief]
+    human_gates: [G3]
+    note: "Identifica risco e exige correção; não reescreve texto e não aprova sozinho."
+
+  # ------------------------------------------------------------ Inteligência
+  cro-analyst:
+    id: cro-analyst
+    tier: tier_3
+    executor_type: Agent
+    nucleus: Inteligência
+    expertise: [analytics, cro, ab-testing, hipoteses, estatistica-basica, priorizacao-ice]
+    frameworks: [ICE, hypothesis-driven-testing, significance-criteria]
+    best_for: [analisar-performance, hipoteses-de-teste, desenhar-ab, proximos-testes]
+    commands: ["@copy-squad--cro-analyst"]
+    contracts: [performance-analysis]
+    handoff_to: [knowledge-curator, copy-chief]
+    human_gates: []
+
+  knowledge-curator:
+    id: knowledge-curator
+    tier: tier_3
+    executor_type: Agent
+    nucleus: Inteligência
+    expertise: [taxonomia, biblioteca-de-ativos, recuperacao, curadoria, learning-records]
+    frameworks: [asset-library, learning-record]
+    best_for: [registrar-aprendizado, consultar-biblioteca, curar-ativos, reuso]
+    commands: ["@copy-squad--knowledge-curator"]
+    contracts: [knowledge-query-result, learning-record]
+    handoff_to: [copy-chief]
+    human_gates: [G5]
+
+  # --------------------------------------------------------------- Operação
+  copy-publisher:
+    id: copy-publisher
+    tier: tier_3
+    executor_type: Agent
+    nucleus: Operação
+    expertise: [versionamento, pacote-de-aprovacao, hash-de-payload, preflight, entrega, rollback]
+    frameworks: [payload-sha256, idempotency, publish-preflight]
+    best_for: [preparar-aprovacao, versionar, verificar-antes-de-publicar, registrar-publicacao]
+    commands: ["@copy-squad--copy-publisher"]
+    contracts: [approval-request, publish-receipt]
+    handoff_to: [approval-owner, copy-chief, cro-analyst, knowledge-curator]
+    human_gates: [G1, G2, G3, G4]
+    note: "Produtor único de approval-request (G1, G2, G3, G4 e amostragem; D5). Prepara e verifica; não aprova. O hash vem de scripts/approval_tools.py, nunca do modelo. O preflight é pós-decisão e volta ao copy-chief para contra-assinatura (D8, E4). A execução externa é do humano ou da sessão principal (nenhum subagent executa) e só ocorre com approval-decision approved válido (approved_with_edits abre a rodada seguinte)."
+
+  # ------------------------------------------------------------- Governança
+  approval-owner:
+    id: approval-owner
+    tier: human
+    executor_type: Human
+    nucleus: Governança
+    expertise: [decisao-estrategica, aprovacao-de-claims, risco, responsabilidade-final]
+    frameworks: [risk-policy, gates-g1-g5]
+    best_for: [aprovar-brief, aprovar-angulo, aprovar-claims, aprovar-publicacao, corrigir-falha-de-agente]
+    commands: ["*approve-gate", "*correct-agent-failure"]
+    contracts: [approval-decision]
+    handoff_to: [copy-publisher, knowledge-curator]
+    human_gates: [G1, G2, G3, G4, G5]
+    note: "Papel humano. Sem wrapper em .claude/agents/; opera pelas tasks approve-gate e correct-agent-failure e pelo guia em agents/approval-owner.md."
+
+# Cadeia padrão de trabalho (wf-copy-production)
+workflow_chain:
+  L1_intake: copy-chief
+  L2_strategy: [brief-master, audience-voc, offer-strategist, brand-voice-guardian]
+  L3_research: research-analyst
+  L4_ideation: hook-angle-creator
+  L5_production: [conversion-copywriter, content-copywriter, ux-writer, video-social-scriptwriter, email-crm-copywriter, localization-specialist]
+  L6_quality: [copy-editor, brand-voice-guardian, compliance-checker]
+  L7_approval_and_delivery: [approval-owner, copy-publisher]
+  L8_intelligence: [cro-analyst, knowledge-curator]
+
+# ----------------------------------------------------------------------------
+# Matriz de roteamento: tipo de demanda → workflow → agentes
+# ----------------------------------------------------------------------------
+routing_matrix:
+  conversion:
+    description: "Landing page, página de vendas, anúncio, e-mail de venda (VSL é demanda de vídeo)"
+    default_workflow: wf-copy-production
+    multi_asset_workflow: wf-campaign-launch
+    low_risk_variation_workflow: wf-fast-variation
+    lead_agent: conversion-copywriter
+    agents: [copy-chief, brief-master, audience-voc, offer-strategist, research-analyst, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner, cro-analyst, knowledge-curator]
+    default_risk: high
+    note: "Variação de anúncio ou post com destino de publicação sai da fast lane: anúncio pago é high e post orgânico é medium (D6)."
+  content:
+    description: "Artigo, newsletter, post, carrossel, guia"
+    default_workflow: wf-copy-production
+    repurposing_workflow: wf-content-repurposing
+    lead_agent: content-copywriter
+    agents: [copy-chief, brief-master, research-analyst, hook-angle-creator, content-copywriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner, knowledge-curator]
+    default_risk: medium
+  crm:
+    description: "Jornada de e-mail, automação, reativação, nutrição, retenção"
+    default_workflow: wf-copy-production
+    multi_asset_workflow: wf-campaign-launch
+    lead_agent: email-crm-copywriter
+    agents: [copy-chief, brief-master, audience-voc, offer-strategist, hook-angle-creator, email-crm-copywriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner, cro-analyst]
+    default_risk: medium
+    escalates_to_high_when: "e-mail de venda, oferta com preço ou garantia, uso de dados pessoais na segmentação"
+  product_ux:
+    description: "Microcopy de produto: onboarding, formulários, erros, estados vazios"
+    default_workflow: wf-copy-production
+    lead_agent: ux-writer
+    agents: [copy-chief, brief-master, ux-writer, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner]
+    default_risk: medium
+  video:
+    description: "Roteiro de Reels, YouTube, anúncio em vídeo, VSL, webinar"
+    default_workflow: wf-copy-production
+    repurposing_workflow: wf-content-repurposing
+    lead_agent: video-social-scriptwriter
+    agents: [copy-chief, brief-master, research-analyst, hook-angle-creator, video-social-scriptwriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner]
+    default_risk: medium
+    escalates_to_high_when: "anúncio pago, VSL, promessa de resultado"
+  brand:
+    description: "Voz, posicionamento, manifesto, tagline, glossário"
+    default_workflow: wf-copy-production
+    lead_agent: content-copywriter
+    task: write-content-piece
+    agents: [copy-chief, brief-master, audience-voc, offer-strategist, brand-voice-guardian, research-analyst, content-copywriter, copy-editor, compliance-checker, copy-publisher, approval-owner]
+    default_risk: medium
+    note: "Brand copywriting (manifesto, tagline) é do content-copywriter, com revisão do brand-voice-guardian; o guia de voz é definido por define-brand-voice e validado pelo humano em G1 na primeira vez. Decisões de posicionamento são sempre humanas (G1) (ADR-001, D7, D15)."
+  research:
+    description: "Pesquisa de mercado, concorrentes, linguagem do cliente (sem produção de copy final)"
+    default_workflow: wf-copy-production
+    partial_phases: "Executar apenas as fases de intake, estratégia e pesquisa; encerrar com research-packet aprovado em QG-RESEARCH. O entregável é o research packet (task build-research-packet; ADR-001, D15)."
+    task: build-research-packet
+    lead_agent: research-analyst
+    agents: [copy-chief, brief-master, audience-voc, research-analyst, compliance-checker, knowledge-curator]
+    default_risk: low
+
+trigger_routing:
+  - {trigger: "dados de performance disponíveis de ativos publicados", workflow: wf-performance-loop, lead_agent: cro-analyst, agents: [copy-chief, cro-analyst, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner, knowledge-curator]}
+  - {trigger: "ativo longo aprovado a ser derivado em múltiplos formatos", workflow: wf-content-repurposing, lead_agent: content-copywriter, agents: [copy-chief, knowledge-curator, content-copywriter, video-social-scriptwriter, email-crm-copywriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner]}
+  - {trigger: "variação de headline, CTA ou post para uso interno ou teste (baixo risco, sem publicação)", workflow: wf-fast-variation, lead_agent: hook-angle-creator, agents: [copy-chief, brief-master, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker], note: "Inclui QG-COMPLIANCE em modo leve; se a variação for publicada, sai da pista rápida (prepare-approval-package + G4)."}
+  - {trigger: "campanha com 2 ou mais ativos e canais", workflow: wf-campaign-launch, lead_agent: copy-chief, agents: [copy-chief, brief-master, audience-voc, offer-strategist, research-analyst, hook-angle-creator, conversion-copywriter, content-copywriter, email-crm-copywriter, video-social-scriptwriter, copy-editor, brand-voice-guardian, compliance-checker, copy-publisher, approval-owner, knowledge-curator]}
+  - {trigger: "pedido de localização para outro mercado ou idioma", workflow: wf-copy-production, lead_agent: localization-specialist, note: "Fase de localização entra depois da aprovação da peça na origem."}
+  - {trigger: "correção humana de output de agente", workflow: null, task: correct-agent-failure, lead_agent: approval-owner, note: "G5; o knowledge-curator registra o learning-record."}
+  - {trigger: "consulta à biblioteca ou ao conhecimento do negócio", workflow: null, task: retrieve-knowledge, lead_agent: knowledge-curator}
+
+modes:
+  full: "Squad completo (padrão)."
+  mvp:
+    agents: [copy-chief, brief-master, research-analyst, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker, cro-analyst, copy-publisher]
+    human_roles: [approval-owner]
+    note: "Núcleo de 10 agentes de IA mais o approval-owner (ADR-001, D22 e E6), igual a config.yaml modes.mvp. O copy-publisher entra porque a governança depende dele para pacotes de aprovação e hash; o brand-voice-guardian entra porque o preflight exige brand-review. QG-LEARNING é dispensado (mvp_waivers): o aprendizado fica em performance-analysis.next_actions até o knowledge-curator ser ativado. Funções ausentes (audiência, oferta, biblioteca) entram como lacuna em execution-plan.gate_gaps."
+  fast_lane: "Baixo risco, só uso interno ou teste: wf-fast-variation, com QG-COMPLIANCE em modo leve."
+
+global_commands:
+  "/copy-squad": "Entry point do squad: ativa o copy-chief, qualifica a demanda, escolhe o workflow e conduz a produção com gates humanos"
+  "@copy-squad--copy-chief": "Mesmo que /copy-squad (invocação como subagente do Claude Code)"
+  "/copy-briefing-master": "Skill: cria e consolida o brief"
+  "/copy-hook-generator": "Skill: gera 20+ ângulos e hooks ranqueados"
+  "/copy-fact-checker": "Skill: checagem de claims e conformidade"
+  "/copy-cro-hypothesis-builder": "Skill: hipóteses de CRO a partir de resultados"
+
+consolidations:
+  - "Brief Intake → brief-master (a triagem de perguntas do intake fica no copy-chief)"
+  - "Project Manager → copy-chief (*monitor)"
+  - "Version Control → copy-publisher (*versions)"
+  - "Asset Library → knowledge-curator"
+  - "Audience + Voice-of-Customer → audience-voc"
+  - "Positioning + Offer → offer-strategist"
+  - "Analytics + CRO → cro-analyst"
+
+# Fonte de verdade: config.yaml agents:[]. Qualquer mudança de conjunto de agentes
+# altera config.yaml primeiro e este arquivo depois; o validador do squad confere a paridade.

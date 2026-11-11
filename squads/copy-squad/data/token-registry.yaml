@@ -1,0 +1,1121 @@
+meta:
+  squad_scope: copy-squad
+  version: 1.0.0
+  purpose: >-
+    Registro de tokens do Copy Squad. Nove famílias canônicas (Time, Capacity,
+    Threshold, Priority, Permission, Taxonomy, Behavior, Accountability, Mode)
+    com os valores concretos que agentes, tasks, workflows, checklists e
+    contratos devem ler em vez de repetir números no texto.
+  created_at: "2026-11-10"
+  semantics: |
+    consumed_by[] lista os arquivos do squad que DEVEM referenciar o token.
+    Todo valor numérico de política (limites, prazos, limiares) vive aqui; um
+    agente ou task que precise do número cita o nome do token. Mudar um valor
+    exige alterar apenas este arquivo e registrar a mudança em
+    docs/agent-changelog.md.
+  value_notation: |
+    Tokens escalares usam value:. Tokens compostos (listas, intervalos, mapas)
+    usam value: com a estrutura completa. Unidades sempre explícitas no nome
+    (_HOURS, _MIN, _PCT, _DAYS) ou no campo unit.
+  families:
+    - Time
+    - Capacity
+    - Threshold
+    - Priority
+    - Permission
+    - Taxonomy
+    - Behavior
+    - Accountability
+    - Mode
+
+tokens:
+
+# ============================================================================
+# FAMÍLIA 1 — Time (prazos, SLAs, janelas, expiração)
+# ============================================================================
+
+- token_name: APPROVAL_TTL_HOURS
+  family: Time
+  value: 72
+  unit: hours
+  description: >-
+    TTL de 72 h (ADR-001, D3), com dois usos distintos. (1) approval-request.expires_at =
+    criação + 72 h = prazo de resposta: passou sem decisão, o pedido continua pendente
+    (silêncio nunca é aprovação) e o copy-chief reenvia ou escala. (2) approval-decision.expires_at =
+    decided_at + 72 h = janela de execução: o preflight exige now < decision.expires_at;
+    decisão expirada exige nova rodada e novo approval-request pelo copy-publisher.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-publisher.md
+    - agents/approval-owner.md
+    - tasks/prepare-approval-package.md
+    - tasks/approve-gate.md
+    - tasks/publish-approved-asset.md
+    - checklists/publish-preflight-checklist.md
+    - checklists/approval-gate-checklist.md
+    - contracts/approval-request.schema.json
+    - contracts/approval-decision.schema.json
+
+- token_name: SLA_INTAKE_MIN
+  family: Time
+  value: 30
+  unit: minutes
+  description: Prazo para o copy-chief classificar a demanda e emitir demand-intake (ou devolver até 5 perguntas).
+  consumed_by:
+    - tasks/intake-demand.md
+    - agents/copy-chief.md
+    - workflows/wf-copy-production.yaml
+    - workflows/wf-fast-variation.yaml
+
+- token_name: SLA_PLAN_MIN
+  family: Time
+  value: 30
+  unit: minutes
+  description: Prazo para o copy-chief emitir o execution-plan depois que o intake estiver completo.
+  consumed_by:
+    - tasks/plan-execution.md
+    - agents/copy-chief.md
+
+- token_name: SLA_BRIEF_HOURS
+  family: Time
+  value: 4
+  unit: hours
+  description: Prazo para o brief-master entregar o brief v1 (rascunho) a partir de um intake completo.
+  consumed_by:
+    - tasks/create-brief.md
+    - tasks/consolidate-brief.md
+    - agents/brief-master.md
+
+- token_name: SLA_RESEARCH_HOURS
+  family: Time
+  value: 8
+  unit: hours
+  description: Prazo para o research-analyst entregar o research-packet de uma campanha padrão.
+  consumed_by:
+    - tasks/build-research-packet.md
+    - tasks/find-competitive-angles.md
+    - agents/research-analyst.md
+
+- token_name: SLA_ANGLES_HOURS
+  family: Time
+  value: 4
+  unit: hours
+  description: Prazo para o hook-angle-creator entregar o banco de ângulos ranqueado.
+  consumed_by:
+    - tasks/generate-angles-hooks.md
+    - agents/hook-angle-creator.md
+
+- token_name: SLA_DRAFT_HOURS
+  family: Time
+  value: 8
+  unit: hours
+  description: Prazo para um copywriter de produção entregar a primeira versão (v1) de um ativo.
+  consumed_by:
+    - tasks/write-landing-page.md
+    - tasks/write-ad-variations.md
+    - tasks/build-email-sequence.md
+    - tasks/write-content-piece.md
+    - tasks/write-video-script.md
+    - tasks/write-ux-microcopy.md
+    - workflows/wf-copy-production.yaml
+
+- token_name: SLA_EDIT_HOURS
+  family: Time
+  value: 2
+  unit: hours
+  description: Prazo para o copy-editor devolver o edit-report depois de receber o draft.
+  consumed_by:
+    - tasks/edit-draft.md
+    - tasks/edit-for-concision.md
+    - agents/copy-editor.md
+
+- token_name: SLA_QUALITY_REVIEW_HOURS
+  family: Time
+  value: 4
+  unit: hours
+  description: Prazo para brand-voice-guardian (brand-review) e compliance-checker (compliance-review) concluírem cada revisão.
+  consumed_by:
+    - tasks/review-brand-voice.md
+    - tasks/check-compliance.md
+    - tasks/fact-check-claims.md
+    - tasks/localize-copy.md
+
+- token_name: SLA_HUMAN_GATE_HOURS
+  family: Time
+  value: 24
+  unit: hours
+  description: >-
+    Meta de resposta do approval-owner em G1–G4. Estourado o prazo, o copy-chief
+    reenvia o pedido e registra o atraso; o SLA nunca autoriza aprovação tácita.
+  consumed_by:
+    - tasks/approve-gate.md
+    - tasks/monitor-pipeline.md
+    - agents/approval-owner.md
+    - agents/copy-chief.md
+    - checklists/approval-gate-checklist.md
+
+- token_name: SLA_PUBLISH_MIN
+  family: Time
+  value: 60
+  unit: minutes
+  description: Prazo para o copy-publisher executar (ou entregar ao responsável pela execução) depois de aprovação válida.
+  consumed_by:
+    - tasks/publish-approved-asset.md
+    - agents/copy-publisher.md
+
+- token_name: PERFORMANCE_WINDOW_DAYS
+  family: Time
+  value: 7
+  unit: days
+  description: Janela mínima de coleta antes de o cro-analyst analisar um ativo publicado (ajustável por canal em data/channel-specs.yaml).
+  consumed_by:
+    - tasks/analyze-performance.md
+    - agents/cro-analyst.md
+    - workflows/wf-performance-loop.yaml
+
+- token_name: LEARNING_REVIEW_DAYS
+  family: Time
+  value: 90
+  unit: days
+  description: Prazo padrão de review_after de um learning-record; depois dele o aprendizado é reavaliado antes de continuar valendo.
+  consumed_by:
+    - tasks/register-learning.md
+    - agents/knowledge-curator.md
+    - contracts/learning-record.schema.json
+
+- token_name: TELEMETRY_RETENTION_DAYS
+  family: Time
+  value: 365
+  unit: days
+  description: Retenção mínima de agent-runs.jsonl e agent-evaluations.jsonl (append-only; arquivar, nunca editar).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - data/agent-metrics.yaml
+
+# ============================================================================
+# FAMÍLIA 2 — Capacity (limites de volume, perguntas, ciclos, paralelismo)
+# ============================================================================
+
+- token_name: MAX_CLARIFYING_QUESTIONS
+  family: Capacity
+  value: 5
+  description: Máximo de perguntas objetivas que um agente pode devolver ao solicitante quando falta informação crítica.
+  consumed_by:
+    - agents/copy-chief.md
+    - agents/brief-master.md
+    - tasks/intake-demand.md
+    - tasks/create-brief.md
+    - checklists/intake-checklist.md
+    - contracts/demand-intake.schema.json
+
+- token_name: MIN_ANGLES_FULL
+  family: Capacity
+  value: 20
+  description: Mínimo de ângulos distintos nos workflows completos (ADR-001, D9 e D11; a regra é do quality gate QG-ANGLES, não do schema).
+  consumed_by:
+    - agents/hook-angle-creator.md
+    - tasks/generate-angles-hooks.md
+    - checklists/angle-quality-checklist.md
+    - data/quality-gates.yaml
+
+- token_name: MIN_ANGLES_FAST_LANE
+  family: Capacity
+  value: 5
+  description: Mínimo de ângulos distintos na fast_lane (ADR-001, D9; uso interno, risco low). É desvio consciente do mínimo de 20 (MIN_ANGLES_FULL), que vale nos workflows completos.
+  consumed_by:
+    - agents/hook-angle-creator.md
+    - tasks/generate-angles-hooks.md
+    - checklists/angle-quality-checklist.md
+    - data/quality-gates.yaml
+
+- token_name: MIN_VARIATIONS_FAST_LANE
+  family: Capacity
+  value: 5
+  description: Mínimo de variações por elemento no modo fast_lane (headline, CTA, post).
+  consumed_by:
+    - workflows/wf-fast-variation.yaml
+    - tasks/write-ad-variations.md
+    - tasks/optimize-ctas.md
+    - agents/conversion-copywriter.md
+
+- token_name: MAX_ANGLES
+  family: Capacity
+  value: 50
+  description: Teto de ângulos por rodada; acima disso o ranking perde valor e o G2 vira ruído.
+  consumed_by:
+    - agents/hook-angle-creator.md
+    - tasks/generate-angles-hooks.md
+
+- token_name: ANGLES_SHORTLIST_SIZE
+  family: Capacity
+  value: 5
+  description: Quantidade exata de ângulos finalistas (shortlist) apresentados ao approval-owner em G2 (ADR-001, D9).
+  consumed_by:
+    - tasks/generate-angles-hooks.md
+    - tasks/approve-gate.md
+
+- token_name: REWORK_MAX_CYCLES
+  family: Capacity
+  value: 2
+  description: Máximo de ciclos de retrabalho por gate (status REVIEW). Esgotado, o item escala ao copy-chief.
+  consumed_by:
+    - data/quality-gates.yaml
+    - agents/copy-chief.md
+    - tasks/monitor-pipeline.md
+    - workflows/wf-copy-production.yaml
+    - workflows/wf-campaign-launch.yaml
+    - workflows/wf-fast-variation.yaml
+    - workflows/wf-performance-loop.yaml
+    - workflows/wf-content-repurposing.yaml
+
+- token_name: MAX_PARALLEL_TASKS
+  family: Capacity
+  value: 4
+  description: Teto de tasks de produção simultâneas por campanha (cada uma com ativo e asset_id distintos).
+  consumed_by:
+    - tasks/plan-execution.md
+    - workflows/wf-campaign-launch.yaml
+    - agents/copy-chief.md
+
+- token_name: MAX_ASSETS_PER_CAMPAIGN
+  family: Capacity
+  value: 12
+  description: Acima deste número de ativos a campanha deve ser dividida em ondas, cada uma com seu plano.
+  consumed_by:
+    - tasks/plan-execution.md
+    - workflows/wf-campaign-launch.yaml
+
+- token_name: MAX_EMAILS_PER_JOURNEY
+  family: Capacity
+  value: 10
+  description: Teto de e-mails em uma única jornada gerada de uma vez (mais que isso exige segunda rodada com dados da primeira).
+  consumed_by:
+    - agents/email-crm-copywriter.md
+    - tasks/build-email-sequence.md
+
+- token_name: MAX_AB_VARIABLES
+  family: Capacity
+  value: 1
+  description: Variáveis alteradas por teste A/B (isolamento de causalidade; testes multivariados exigem aprovação do cro-analyst).
+  consumed_by:
+    - agents/cro-analyst.md
+    - tasks/design-ab-test.md
+    - checklists/cro-test-checklist.md
+
+# ============================================================================
+# FAMÍLIA 3 — Threshold (limiares de qualidade, amostragem, estatística)
+# ============================================================================
+
+- token_name: QG_APPROVE_MIN
+  family: Threshold
+  value: 0.80
+  scale: "0-1"
+  description: Score mínimo para APPROVE em qualquer quality gate (escala 0–1).
+  consumed_by:
+    - data/quality-gates.yaml
+    - data/composition-rules.yaml
+    - checklists/agent-evaluation-scorecard.md
+    - workflows/wf-copy-production.yaml
+    - workflows/wf-campaign-launch.yaml
+    - workflows/wf-fast-variation.yaml
+    - workflows/wf-performance-loop.yaml
+    - workflows/wf-content-repurposing.yaml
+
+- token_name: QG_REVIEW_MIN
+  family: Threshold
+  value: 0.60
+  scale: "0-1"
+  description: Score mínimo da faixa REVIEW (0.60–0.79). Abaixo disso, ou com veto_condition, o resultado é VETO.
+  consumed_by:
+    - data/quality-gates.yaml
+    - checklists/agent-evaluation-scorecard.md
+
+- token_name: BRAND_ALIGNMENT_MIN
+  family: Threshold
+  value: 80
+  scale: "0-100"
+  description: brand_alignment_score mínimo do brand-review para approved_for_next_stage = true.
+  consumed_by:
+    - agents/brand-voice-guardian.md
+    - tasks/review-brand-voice.md
+    - checklists/brand-voice-review-checklist.md
+    - data/quality-gates.yaml
+    - contracts/brand-review.schema.json
+
+- token_name: EDIT_QUALITY_MIN
+  family: Threshold
+  value: 80
+  scale: "0-100"
+  description: quality_score mínimo do edit-report para seguir à revisão de voz.
+  consumed_by:
+    - agents/copy-editor.md
+    - tasks/edit-draft.md
+    - checklists/edit-quality-checklist.md
+    - contracts/edit-report.schema.json
+
+- token_name: CONCISION_CUT_RANGE
+  family: Threshold
+  value:
+    min_pct: 20
+    max_pct: 40
+  unit: percent
+  description: >-
+    Faixa de redução de palavras do edit-for-concision (reduction_pct). Cortar
+    abaixo de 20% não cumpre o objetivo; acima de 40% exige justificativa e
+    confirmação de que nenhum argumento ou claim aprovado foi perdido.
+  consumed_by:
+    - agents/copy-editor.md
+    - tasks/edit-for-concision.md
+    - checklists/edit-quality-checklist.md
+    - contracts/edit-report.schema.json
+
+- token_name: SAMPLING_RATE_LOW
+  family: Threshold
+  value: 0.20
+  description: Fração dos ativos de risco low enviada a revisão humana por amostragem (seleção determinística por sha256 do asset_id, calculada por scripts/approval_tools.py sample, D21; pedido com gate SAMPLING, D5).
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-chief.md
+    - tasks/approve-gate.md
+    - workflows/wf-fast-variation.yaml
+
+- token_name: SAMPLING_RATE_MEDIUM_AUDIT
+  family: Threshold
+  value: 0.10
+  description: Fração dos ativos de risco medium já aprovados que é re-auditada por compliance-checker após a publicação (controle de qualidade do processo).
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/compliance-checker.md
+    - tasks/check-compliance.md
+
+- token_name: MIN_RESEARCH_CONFIDENCE
+  family: Threshold
+  value: 0.60
+  scale: "0-1"
+  description: Confiança mínima do research-packet para alimentar a criação de ângulos sem validação adicional.
+  consumed_by:
+    - agents/research-analyst.md
+    - tasks/build-research-packet.md
+    - checklists/research-quality-checklist.md
+    - contracts/research-packet.schema.json
+
+- token_name: MIN_VERIFIED_FACTS_PCT
+  family: Threshold
+  value: 70
+  unit: percent
+  description: Percentual mínimo de facts com status verified no research-packet para passar em QG-RESEARCH sem REVIEW.
+  consumed_by:
+    - data/quality-gates.yaml
+    - checklists/research-quality-checklist.md
+
+- token_name: AB_CONFIDENCE_LEVEL
+  family: Threshold
+  value: 0.95
+  scale: "0-1"
+  description: >-
+    Nível de confiança mínimo (0.95) para declarar vencedor em teste A/B (ADR-001, D20). Junto com
+    AB_MIN_SAMPLE_PER_VARIANT é o critério padrão; sem atingir os dois, winner_declared = false.
+    significance.confidence_level é número (ex.: 0.95), nunca texto. Critério diferente só se
+    pré-registrado no design-ab-test antes do teste.
+  consumed_by:
+    - agents/cro-analyst.md
+    - tasks/analyze-performance.md
+    - tasks/design-ab-test.md
+    - checklists/cro-test-checklist.md
+    - contracts/performance-analysis.schema.json
+
+- token_name: AB_MIN_SAMPLE_PER_VARIANT
+  family: Threshold
+  value: 1000
+  unit: sessions_or_recipients
+  description: Amostra mínima por variante (ADR-001, D20) quando o design-ab-test não pré-registra cálculo de tamanho amostral próprio; abaixo disso, ou sem AB_CONFIDENCE_LEVEL, winner_declared = false.
+  consumed_by:
+    - agents/cro-analyst.md
+    - tasks/design-ab-test.md
+    - checklists/cro-test-checklist.md
+
+- token_name: MIN_CTA_CLARITY_SCORE
+  family: Threshold
+  value: 0.80
+  scale: "0-1"
+  description: Clareza mínima de CTA (ação específica, verbo, resultado esperado) para aprovação de conversion-copy.
+  consumed_by:
+    - tasks/optimize-ctas.md
+    - checklists/conversion-copy-checklist.md
+
+- token_name: AGENT_PASS_RATE_MIN
+  family: Threshold
+  value: 0.80
+  scale: "0-1"
+  description: Taxa mínima de avaliações aprovadas (passed = true) de um agente numa janela mensal; abaixo disso abre-se revisão de prompt.
+  consumed_by:
+    - data/agent-metrics.yaml
+    - checklists/agent-evaluation-scorecard.md
+    - agents/copy-chief.md
+
+# ============================================================================
+# FAMÍLIA 4 — Priority (prioridade e nível de risco)
+# ============================================================================
+
+- token_name: PRIORITY_LEVELS
+  family: Priority
+  value: [low, medium, high, critical]
+  description: Escala de prioridade comercial da demanda (definida pelo solicitante, confirmada pelo copy-chief).
+  consumed_by:
+    - tasks/intake-demand.md
+    - tasks/plan-execution.md
+    - agents/copy-chief.md
+
+- token_name: PRIORITY_DEFAULT
+  family: Priority
+  value: medium
+  description: Prioridade assumida quando o solicitante não informa (registrada em assumptions).
+  consumed_by:
+    - tasks/intake-demand.md
+    - contracts/demand-intake.schema.json
+
+- token_name: RISK_LEVELS
+  family: Priority
+  value: [low, medium, high]
+  description: Níveis de risco do contrato meta.risk_level, avaliados pelo risk-policy.
+  consumed_by:
+    - data/risk-policy.yaml
+    - contracts/execution-plan.schema.json
+    - contracts/handoff-envelope.schema.json
+
+- token_name: RISK_DEFAULT_UNCLASSIFIED
+  family: Priority
+  value: high
+  description: Risco assumido quando a operação ou o formato não consta na política (fail-safe; nunca assumir low).
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-chief.md
+    - tasks/plan-execution.md
+
+- token_name: GATE_PRIORITY_ORDER
+  family: Priority
+  value: [G3, G4, G1, G2, G5]
+  description: Ordem de atendimento da fila do approval-owner (claims e publicação antes de brief e ângulo; G5 não bloqueia o fluxo).
+  consumed_by:
+    - tasks/approve-gate.md
+    - tasks/monitor-pipeline.md
+    - agents/approval-owner.md
+
+# ============================================================================
+# FAMÍLIA 5 — Permission (quem pode ler, escrever, aprovar, publicar)
+# ============================================================================
+
+- token_name: WORKSPACE_ACCESS
+  family: Permission
+  value: read_only
+  description: O squad lê L0/L1/L2 do workspace do negócio; nunca escreve. Todo artefato de runtime vai para .data/copy-squad/.
+  consumed_by:
+    - context.yaml
+    - agents/brief-master.md
+    - agents/audience-voc.md
+    - agents/offer-strategist.md
+    - agents/brand-voice-guardian.md
+    - config.yaml
+
+- token_name: ALLOWED_WORKSPACE_LAYERS
+  family: Permission
+  value: [L0-identity, L1-strategy, L2-tactical]
+  description: Camadas de workspace legíveis pelo squad. L3 e L4 ficam fora do escopo.
+  consumed_by:
+    - context.yaml
+    - agents/copy-chief.md
+    - config.yaml
+
+- token_name: RUNTIME_WRITE_ROOT
+  family: Permission
+  value: ".data/copy-squad/{business}/"
+  description: Única raiz de escrita permitida aos agentes (inclui {business}/_telemetry/, por negócio, e o journey log em modo append).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - agents/copy-chief.md
+    - agents/copy-publisher.md
+    - agents/knowledge-curator.md
+
+- token_name: APPROVER_ROLES
+  family: Permission
+  value: [approval-owner]
+  description: >-
+    Único papel autorizado a emitir approval-decision, sempre humano (ADR-001, D4): recorded_via
+    human-cli ou human-chat-confirmed, human_attested true, reviewer em config.yaml
+    human_gates.approvers por {business}. Nenhum agente de IA aprova, nem por delegação; subagents
+    nunca escrevem approval-decision.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/approval-owner.md
+    - tasks/approve-gate.md
+    - contracts/approval-decision.schema.json
+
+- token_name: PUBLISH_EXECUTORS
+  family: Permission
+  value: [human, main_session]
+  description: >-
+    Quem pode executar a publicação (publish-receipt.executed_by). O copy-publisher
+    prepara, verifica e emite o pacote de execução; nenhum subagent executa ação externa
+    (E4). A execução é do humano ou da sessão principal, sempre depois da verificação de
+    sha256, bound_to e TTL e da contra-assinatura do copy-chief.
+  consumed_by:
+    - agents/copy-publisher.md
+    - tasks/publish-approved-asset.md
+    - contracts/publish-receipt.schema.json
+
+- token_name: EXTERNAL_ACTION_REQUIRES_APPROVAL
+  family: Permission
+  value: true
+  description: >-
+    Publicar, enviar, veicular, comprar mídia ou alterar página exige approval-decision com
+    decision == approved (approved_with_edits nunca autoriza execução, ADR-001, D2), now <
+    decision.expires_at e payload_sha256 igual ao do pedido e ao hash recalculado por
+    scripts/approval_tools.py hash. Toda ação externa é no mínimo risco medium (D6).
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-publisher.md
+    - agents/copy-chief.md
+    - tasks/publish-approved-asset.md
+    - checklists/publish-preflight-checklist.md
+
+- token_name: HIGH_RISK_CLAIM_TYPES
+  family: Permission
+  value: [price, guarantee, result, authority, testimonial, comparison, health, financial]
+  description: claim_type que escalam automaticamente o risco para high e exigem G3.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/compliance-checker.md
+    - agents/copy-chief.md
+    - tasks/check-compliance.md
+    - tasks/fact-check-claims.md
+    - contracts/compliance-review.schema.json
+
+- token_name: GIT_OPERATIONS_AUTHORITY
+  family: Permission
+  value: out_of_scope
+  description: Git push, PR e release não pertencem ao squad; são exclusivos do papel de devops do repositório.
+  consumed_by:
+    - agents/copy-publisher.md
+    - agents/copy-chief.md
+
+# ============================================================================
+# FAMÍLIA 6 — Taxonomy (enums, prefixos, identificadores)
+# ============================================================================
+
+- token_name: ARTIFACT_ID_PREFIXES
+  family: Taxonomy
+  value:
+    demand-intake: dmd
+    execution-plan: pln
+    brief: brf
+    audience-voc: aud
+    offer-canvas: ofr
+    brand-voice-guide: bvg
+    research-packet: rsp
+    angles: ang
+    conversion-copy: cvc
+    content-piece: cnt
+    ux-copy: uxc
+    video-script: vid
+    email-journey: eml
+    edit-report: edt
+    brand-review: bvr
+    compliance-review: cpl
+    localization: loc
+    approval-request: apr
+    approval-decision: apd
+    publish-receipt: pub
+    performance-analysis: prf
+    learning-record: lrn
+    knowledge-query-result: kqr
+  description: >-
+    Prefixo de três letras do artifact_id por contrato (padrão ^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$).
+    meta.artifact_type é sempre o nome do contrato. Exceções: agent-run usa run_id
+    (prefixo run-), agent-evaluation usa evaluation_id (evl-), handoff-envelope usa envelope_id (env-).
+    O prefixo prf- é exclusivo de performance-analysis; proof_id de prova usa prv- (token PROOF_ID_PREFIX, E3).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - agents/copy-chief.md
+    - contracts/handoff-envelope.schema.json
+    - contracts/agent-run.schema.json
+    - contracts/agent-evaluation.schema.json
+
+- token_name: PROOF_ID_PREFIX
+  family: Taxonomy
+  value: prv
+  description: >-
+    Prefixo do proof_id das provas do offer-canvas e da biblioteca (prv-depoimento-01). O prefixo prf-
+    é reservado ao artifact_id de performance-analysis, para evitar colisão de namespace (E3).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - agents/offer-strategist.md
+    - agents/knowledge-curator.md
+    - contracts/offer-canvas.schema.json
+
+- token_name: IDEMPOTENCY_KEY_PATTERN
+  family: Taxonomy
+  value: "^camp-[a-z0-9]+(-[a-z0-9]+)*:[a-z0-9]+(-[a-z0-9]+)*:(g[1-4]|sampling):r[1-9][0-9]*:[0-9a-f]{12}$"
+  description: >-
+    Formato da idempotency_key do approval-request (E3): {campaign_id}:{asset_id}:{gate em minúsculas}:r{n}:{12
+    primeiros hex do payload_sha256}. Em G1, G2 e G3 de oferta, asset_id = campaign_id; o gate SAMPLING entra como
+    sampling. O pattern fica no schema do approval-request.
+  consumed_by:
+    - data/risk-policy.yaml
+    - data/persistence-layout.yaml
+    - contracts/approval-request.schema.json
+    - agents/copy-publisher.md
+    - tasks/prepare-approval-package.md
+
+- token_name: CAMPAIGN_ID_PATTERN
+  family: Taxonomy
+  value: "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+  description: Formato do campaign_id (slug em minúsculas com prefixo camp-).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - tasks/intake-demand.md
+    - agents/copy-chief.md
+
+- token_name: BUSINESS_SLUG_PATTERN
+  family: Taxonomy
+  value: "^[a-z0-9]+(-[a-z0-9]+)*$"
+  description: Formato do slug da unidade de negócio ({business}); isola dados entre negócios.
+  consumed_by:
+    - data/persistence-layout.yaml
+    - context.yaml
+    - agents/knowledge-curator.md
+
+- token_name: DEMAND_TYPES
+  family: Taxonomy
+  value: [conversion, content, crm, product_ux, video, brand, research]
+  description: Classificação da demanda no intake (contrato demand-intake.demand_type). Roteamento (D15), brand vai para write-content-piece com revisão do brand-voice-guardian; research vai para build-research-packet (entregável = research packet).
+  consumed_by:
+    - agent-registry.yaml
+    - tasks/intake-demand.md
+    - contracts/demand-intake.schema.json
+    - contracts/execution-plan.schema.json
+
+- token_name: WORKFLOW_IDS
+  family: Taxonomy
+  value: [wf-copy-production, wf-campaign-launch, wf-fast-variation, wf-performance-loop, wf-content-repurposing]
+  description: Workflows (Organisms) disponíveis para o execution-plan.
+  consumed_by:
+    - agent-registry.yaml
+    - tasks/plan-execution.md
+    - contracts/execution-plan.schema.json
+
+- token_name: ASSET_FORMATS
+  family: Taxonomy
+  value:
+    conversion-copy: [landing_page, sales_page, ad, email, sequence]
+    content-piece: [article, newsletter, post, carousel, guide, case_study, white_paper, manifesto, tagline]
+    video-script: [reel, youtube, ad, story, vsl, webinar]
+    ux-copy_surface: [onboarding, form, error, empty_state, dashboard, modal, notification]
+  description: >-
+    Enums de formato por contrato de produção (ADR-001, D15). VSL é só de video-script
+    (format vsl, video-social-scriptwriter); conversion-copy não tem vsl. Brand copywriting
+    (manifesto, tagline) e fundo de funil (case_study, white_paper) são do content-copywriter.
+  consumed_by:
+    - data/channel-specs.yaml
+    - contracts/conversion-copy.schema.json
+    - contracts/content-piece.schema.json
+    - contracts/video-script.schema.json
+    - contracts/ux-copy.schema.json
+
+- token_name: CHANNELS
+  family: Taxonomy
+  value: [site, landing_page, email, crm, paid_social, paid_search, organic_social, video, blog, product_ui, messaging]
+  description: Canais reconhecidos pelo intake e pelo brief (especificações de formato e limites em data/channel-specs.yaml).
+  consumed_by:
+    - data/channel-specs.yaml
+    - tasks/intake-demand.md
+    - contracts/brief.schema.json
+    - contracts/demand-intake.schema.json
+
+- token_name: AWARENESS_STAGES
+  family: Taxonomy
+  value: [unaware, problem_aware, solution_aware, product_aware, most_aware]
+  description: Níveis de consciência do público (enum de brief, audience-voc, angles e conversion-copy).
+  consumed_by:
+    - agents/brief-master.md
+    - agents/audience-voc.md
+    - agents/hook-angle-creator.md
+    - agents/conversion-copywriter.md
+    - contracts/brief.schema.json
+    - contracts/audience-voc.schema.json
+    - knowledge/copy-frameworks.md
+
+- token_name: OBJECTION_CATEGORIES
+  family: Taxonomy
+  value: [price, trust, complexity, risk, time, compatibility, need, other]
+  description: Categorias de objeção do audience-voc e do offer-canvas.
+  consumed_by:
+    - agents/audience-voc.md
+    - agents/offer-strategist.md
+    - contracts/audience-voc.schema.json
+
+- token_name: CLAIM_TYPES
+  family: Taxonomy
+  value: [price, guarantee, result, authority, testimonial, comparison, health, financial, data_privacy, other]
+  description: Tipos de claim do compliance-review.
+  consumed_by:
+    - agents/compliance-checker.md
+    - contracts/compliance-review.schema.json
+    - data/risk-policy.yaml
+
+- token_name: CLAIM_STATUSES
+  family: Taxonomy
+  value: [verified, unverified, "false", risky]
+  description: Status de verificação de claim e de fact.
+  consumed_by:
+    - agents/compliance-checker.md
+    - agents/research-analyst.md
+    - contracts/compliance-review.schema.json
+    - contracts/research-packet.schema.json
+
+- token_name: ARTIFACT_STATUSES
+  family: Taxonomy
+  value: [draft, ready, needs_input, needs_approval, approved, rejected, blocked, published, archived]
+  description: Valores permitidos de meta.status.
+  consumed_by:
+    - data/persistence-layout.yaml
+    - tasks/monitor-pipeline.md
+    - contracts/handoff-envelope.schema.json
+
+- token_name: GATE_IDS
+  family: Taxonomy
+  value:
+    G1: "Aprovação do brief consolidado"
+    G2: "Aprovação de ângulo(s)"
+    G3: "Aprovação de claims"
+    G4: "Aprovação final antes de publicar/enviar/veicular"
+    G5: "Correção de falha de agente vira referência"
+  description: Gates humanos operados pelo approval-owner.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/approval-owner.md
+    - tasks/approve-gate.md
+    - contracts/approval-request.schema.json
+
+- token_name: APPROVAL_REQUEST_GATES
+  family: Taxonomy
+  value: [G1, G2, G3, G4, SAMPLING]
+  description: >-
+    Valores do campo gate de approval-request (ADR-001, D5). O copy-publisher é o produtor único
+    (G1 approve_brief, G2 approve_angle, G3 approve_claims, G4 publish|send|run_ads|update_page,
+    SAMPLING internal_use). G5 não usa approval-request: é correct-agent-failure → learning-record.
+  consumed_by:
+    - data/persistence-layout.yaml
+    - data/risk-policy.yaml
+    - data/handoff-matrix.yaml
+    - contracts/approval-request.schema.json
+
+- token_name: QUALITY_GATE_IDS
+  family: Taxonomy
+  value: [QG-INTAKE, QG-BRIEF, QG-RESEARCH, QG-ANGLES, QG-DRAFT, QG-EDIT, QG-BRAND, QG-COMPLIANCE, QG-LOCALIZATION, QG-PUBLISH-PREFLIGHT, QG-LEARNING]
+  description: Quality gates automáticos (detalhe em data/quality-gates.yaml).
+  consumed_by:
+    - data/quality-gates.yaml
+    - workflows/wf-copy-production.yaml
+    - workflows/wf-campaign-launch.yaml
+
+- token_name: SENIORITY_LEVELS
+  family: Taxonomy
+  value: [junior, pleno, senior, lead, director]
+  description: Enum de seniority_level_observed no agent-evaluation.
+  consumed_by:
+    - data/seniority-matrix.yaml
+    - checklists/agent-evaluation-scorecard.md
+    - contracts/agent-evaluation.schema.json
+
+- token_name: LEARNING_ORIGINS
+  family: Taxonomy
+  value: [cro, human_correction, campaign_debrief, qa_failure, customer_feedback]
+  description: Origens válidas de um learning-record.
+  consumed_by:
+    - agents/knowledge-curator.md
+    - tasks/register-learning.md
+    - contracts/learning-record.schema.json
+
+- token_name: JOURNEY_ENTITY_TYPES
+  family: Taxonomy
+  value: [copy-squad.campaign, copy-squad.asset, copy-squad.approval]
+  description: entity_type dos eventos do journey log (Art. IX).
+  consumed_by:
+    - data/persistence-layout.yaml
+    - agents/copy-chief.md
+    - tasks/monitor-pipeline.md
+
+# ============================================================================
+# FAMÍLIA 7 — Behavior (regras de comportamento e tratamento de erro)
+# ============================================================================
+
+- token_name: ON_MISSING_INFORMATION
+  family: Behavior
+  value: needs_input
+  description: Falta informação crítica gera status needs_input com até MAX_CLARIFYING_QUESTIONS perguntas; nunca preenche lacuna com suposição silenciosa.
+  consumed_by:
+    - agents/copy-chief.md
+    - agents/brief-master.md
+    - tasks/intake-demand.md
+    - tasks/create-brief.md
+
+- token_name: ON_UNVERIFIED_CLAIM
+  family: Behavior
+  value: needs_approval
+  description: Claim sem fonte entra como needs_approval ou unverified; nunca como fato. Exemplos e fixtures são marcados como ilustrativos.
+  consumed_by:
+    - agents/conversion-copywriter.md
+    - agents/content-copywriter.md
+    - agents/video-social-scriptwriter.md
+    - agents/email-crm-copywriter.md
+    - agents/compliance-checker.md
+
+- token_name: ON_REVIEW_RESULT
+  family: Behavior
+  value: rework_to_producer
+  description: Score na faixa REVIEW devolve o item ao produtor com feedback específico, até REWORK_MAX_CYCLES ciclos.
+  consumed_by:
+    - data/quality-gates.yaml
+    - agents/copy-chief.md
+    - tasks/monitor-pipeline.md
+
+- token_name: ON_VETO_RESULT
+  family: Behavior
+  value: block_and_escalate
+  description: VETO bloqueia a transição de fase e escala ao copy-chief (qualidade) ou ao approval-owner (risco, claim, decisão estratégica).
+  consumed_by:
+    - data/quality-gates.yaml
+    - data/risk-policy.yaml
+    - agents/copy-chief.md
+    - agents/compliance-checker.md
+
+- token_name: ON_PAYLOAD_MISMATCH
+  family: Behavior
+  value: veto_and_reopen_approval
+  description: sha256 recalculado diferente do aprovado, ou destination, channel ou operation diferentes do que será executado, é VETO (ADR-001, D1); nada é executado e um novo approval-request precisa ser aberto.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-publisher.md
+    - tasks/publish-approved-asset.md
+    - checklists/publish-preflight-checklist.md
+
+- token_name: PAYLOAD_HASH_METHOD
+  family: Behavior
+  value: "sha256(json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8'))"
+  description: >-
+    Método único de payload_sha256 (ADR-001, D1): cobre somente approval-request.payload, em hexadecimal
+    minúsculo de 64 caracteres, sem NFC e sem normalização de quebra de linha. destination, channel e
+    operation não entram no hash; o preflight os compara por igualdade. O hash nunca é calculado por
+    modelo: sempre por python squads/copy-squad/scripts/approval_tools.py hash <approval-request.json>.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/copy-publisher.md
+    - tasks/prepare-approval-package.md
+    - tasks/publish-approved-asset.md
+    - checklists/publish-preflight-checklist.md
+    - contracts/approval-request.schema.json
+
+- token_name: DECISION_RECORDED_VIA
+  family: Behavior
+  value: [human-cli, human-chat-confirmed]
+  description: >-
+    Meios válidos de registrar approval-decision (ADR-001, D4): human-cli (o humano roda
+    approval_tools.py decide, com o prefixo ! no Claude Code) ou human-chat-confirmed (a sessão principal
+    transcreve mensagem explícita do humano, citada literalmente em comments). Exige human_attested true.
+  consumed_by:
+    - data/risk-policy.yaml
+    - agents/approval-owner.md
+    - tasks/approve-gate.md
+    - contracts/approval-decision.schema.json
+
+- token_name: PRODUCER_VALIDATOR_SEPARATION
+  family: Behavior
+  value: true
+  description: AP05. Quem produz um artefato nunca valida o próprio artefato; o executor do gate é sempre outro agente (ou o humano).
+  consumed_by:
+    - data/composition-rules.yaml
+    - data/quality-gates.yaml
+    - agents/copy-editor.md
+    - agents/brand-voice-guardian.md
+    - agents/compliance-checker.md
+
+- token_name: APPEND_ONLY_LOGS
+  family: Behavior
+  value: [handoffs.jsonl, agent-runs.jsonl, agent-evaluations.jsonl, lifecycle-events.jsonl]
+  description: Logs que só aceitam acréscimo; correção de registro errado é feita por novo evento compensatório.
+  consumed_by:
+    - data/persistence-layout.yaml
+    - agents/copy-chief.md
+    - agents/copy-publisher.md
+
+- token_name: DRAFT_VERSIONING
+  family: Behavior
+  value: immutable_versions
+  description: Drafts são salvos como v1, v2, v3 e nunca sobrescritos; o status mais recente fica no meta.status da maior versão.
+  consumed_by:
+    - data/persistence-layout.yaml
+    - tasks/manage-versions.md
+    - agents/copy-publisher.md
+
+- token_name: RETRY_ON_TOOL_FAILURE
+  family: Behavior
+  value:
+    attempts: 2
+    backoff: linear
+    then: escalate
+  description: Falha transitória de ferramenta ou leitura permite 2 novas tentativas; persistindo, status failed no agent-run e escalonamento ao copy-chief.
+  consumed_by:
+    - agents/copy-chief.md
+    - data/agent-metrics.yaml
+
+- token_name: LEGITIMATE_URGENCY_ONLY
+  family: Behavior
+  value: true
+  description: Urgência e escassez só aparecem na copy se offer-canvas.legitimate_urgency.exists = true com motivo real e prazo verificável.
+  consumed_by:
+    - knowledge/ethical-persuasion.md
+    - agents/offer-strategist.md
+    - agents/conversion-copywriter.md
+    - agents/email-crm-copywriter.md
+    - agents/compliance-checker.md
+
+- token_name: NO_INVENTION
+  family: Behavior
+  value: true
+  description: Nenhum depoimento, número de resultado, prêmio ou autoridade pode ser criado; exemplos de documentação usam dados ilustrativos rotulados.
+  consumed_by:
+    - knowledge/ethical-persuasion.md
+    - agents/conversion-copywriter.md
+    - agents/content-copywriter.md
+    - agents/research-analyst.md
+    - agents/hook-angle-creator.md
+    - agents/compliance-checker.md
+
+# ============================================================================
+# FAMÍLIA 8 — Accountability (donos de resultado)
+# ============================================================================
+
+- token_name: ACCOUNTABILITY_OWNER
+  family: Accountability
+  value: approval-owner
+  description: Papel humano responsável final pelo que o squad publica. Também é o accountability_owner de config.yaml.
+  consumed_by:
+    - config.yaml
+    - data/composition-rules.yaml
+    - data/quality-gates.yaml
+    - agents/approval-owner.md
+
+- token_name: ORCHESTRATOR_AGENT
+  family: Accountability
+  value: copy-chief
+  description: Agente dono do fluxo (intake, plano, monitoramento, escalonamento e avaliação de agentes).
+  consumed_by:
+    - config.yaml
+    - agent-registry.yaml
+    - agents/copy-chief.md
+
+- token_name: GATE_ESCALATION_TARGETS
+  family: Accountability
+  value:
+    quality_veto: copy-chief
+    risk_or_claim_veto: approval-owner
+    strategic_decision: approval-owner
+    schema_violation: copy-chief
+    payload_mismatch: copy-chief
+  description: Para quem cada tipo de VETO escala.
+  consumed_by:
+    - data/quality-gates.yaml
+    - data/risk-policy.yaml
+    - agents/copy-chief.md
+
+- token_name: STRATEGIC_DECISIONS_HUMAN_ONLY
+  family: Accountability
+  value: [positioning, price, promise, segment, commercial_priority]
+  description: Decisões que nenhum agente toma; o agente apresenta opções e o approval-owner decide.
+  consumed_by:
+    - agents/offer-strategist.md
+    - agents/brief-master.md
+    - agents/approval-owner.md
+    - knowledge/human-in-the-loop.md
+
+- token_name: EVALUATION_OWNERS
+  family: Accountability
+  value:
+    quality_layer: copy-chief
+    operational_layer: script
+    business_layer: cro-analyst
+    human_corrections: approval-owner
+  description: Quem registra cada camada de avaliação em agent-evaluations.jsonl.
+  consumed_by:
+    - data/agent-metrics.yaml
+    - checklists/agent-evaluation-scorecard.md
+    - contracts/agent-evaluation.schema.json
+
+# ============================================================================
+# FAMÍLIA 9 — Mode (modos de execução)
+# ============================================================================
+
+- token_name: EXECUTION_MODE
+  family: Mode
+  value: full
+  allowed: [full, mvp, fast_lane]
+  description: Modo padrão do squad (full = squad completo; mvp = núcleo de 10 agentes de IA mais o approval-owner humano, ADR-001, D22 e E6; fast_lane = baixo risco, uso interno).
+  consumed_by:
+    - config.yaml
+    - agents/copy-chief.md
+    - tasks/plan-execution.md
+
+- token_name: MVP_AGENTS
+  family: Mode
+  value: [copy-chief, brief-master, research-analyst, hook-angle-creator, conversion-copywriter, copy-editor, brand-voice-guardian, compliance-checker, cro-analyst, copy-publisher]
+  description: >-
+    Agentes de IA ativos no modo mvp (ADR-001, D22, E6): o copy-publisher entra porque a governança depende
+    dele para pacotes de aprovação e hash; o brand-voice-guardian entra porque o preflight exige brand-review;
+    o approval-owner (humano) completa o conjunto. QG-LEARNING é dispensado (mvp_waivers em quality-gates). As demais
+    funções são marcadas como lacuna no plano; o copy-chief não absorve funções de publicação nem de aprovação.
+  consumed_by:
+    - config.yaml
+    - tasks/plan-execution.md
+    - agent-registry.yaml
+
+- token_name: FAST_LANE_ELIGIBILITY
+  family: Mode
+  value:
+    risk_level: low
+    channel: internal_only
+    allowed_operations: [headline_variation, cta_variation, post_variation, content_idea, internal_draft]
+    forbidden_claim_types: [price, guarantee, result, authority, testimonial, comparison, health, financial]
+    forbidden_destinations: [paid_media, owned_organic, email_to_customer_base]
+    compliance_mode: light
+  description: >-
+    Condições cumulativas para usar wf-fast-variation (ADR-001, D6): uso interno ou teste, nunca publicado
+    nem enviado; QG-COMPLIANCE roda em modo leve. Anúncio pago (high) e post orgânico (medium) saem da
+    pista rápida e sobem para wf-copy-production, com prepare-approval-package e G4.
+  consumed_by:
+    - data/risk-policy.yaml
+    - workflows/wf-fast-variation.yaml
+    - tasks/plan-execution.md
+
+- token_name: DRY_RUN
+  family: Mode
+  value: false
+  description: Quando true, o copy-publisher verifica tudo e gera o publish-receipt com outcome handed_off, sem entregar ao canal.
+  consumed_by:
+    - agents/copy-publisher.md
+    - tasks/publish-approved-asset.md
+
+- token_name: LANGUAGE_DEFAULT
+  family: Mode
+  value: pt-BR
+  description: Locale de origem padrão das peças (localization.source_locale quando não informado).
+  consumed_by:
+    - agents/localization-specialist.md
+    - tasks/localize-copy.md
+    - agents/brand-voice-guardian.md
+
+# ============================================================================
+# Cobertura
+# ============================================================================
+# Famílias: 9. Todo token tem consumed_by[] preenchido.
+# consumed_by[] é declarativo (consumidores previstos); o validador estrutural
+# (scripts/validate_copy_squad.py) confere que os arquivos citados existem.

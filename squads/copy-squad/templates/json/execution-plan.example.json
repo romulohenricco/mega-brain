@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "pln-fluxo-caixa-001-exemplo",
+    "artifact_type": "execution-plan",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "copy-chief",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.8,
+    "risk_level": "medium",
+    "assumptions": [
+      "Exemplo de esqueleto; substitua pelos valores reais."
+    ]
+  },
+  "demand_id": "dmd-fluxo-caixa-001",
+  "objective": "Produzir página de vendas e sequência de e-mails da mentoria com aprovação humana antes de publicar",
+  "demand_type": "conversion",
+  "risk_level": "high",
+  "workflow_id": "wf-copy-production",
+  "steps": [
+    {
+      "step": 1,
+      "agent": "brief-master",
+      "task": "tasks/create-brief.md",
+      "input_required": [
+        "demand-intake"
+      ],
+      "output_contract": "brief",
+      "human_approval": false,
+      "gate": null,
+      "success_criteria": [
+        "Brief com 3 ou mais critérios de aceite mensuráveis"
+      ]
+    }
+  ],
+  "missing_information": [
+    "Preço"
+  ],
+  "estimated_effort": "5 a 7 dias úteis (exemplo ilustrativo)",
+  "next_action": "Enviar as perguntas pendentes ao approval-owner e aguardar respostas antes do passo 1."
+}

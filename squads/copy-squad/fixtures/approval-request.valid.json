@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "apr-lp-mentoria-v2",
+    "artifact_type": "approval-request",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "copy-publisher",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "needs_approval",
+    "confidence": 0.9,
+    "risk_level": "high",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "asset_id": "cvc-lp-mentoria",
+  "gate": "G4",
+  "operation": "publish",
+  "destination": "landing page da mentoria (CMS), publicação manual pelo responsável",
+  "channel": "landing_page",
+  "payload": {
+    "format": "landing_page",
+    "headline": "Saiba para onde vai o dinheiro da sua empresa antes do fim do mês",
+    "sections": [
+      {
+        "section": "hero",
+        "copy": "Mentoria de gestão financeira para pequenas empresas: organize o fluxo de caixa em 8 semanas, com acompanhamento semanal (exemplo ilustrativo).",
+        "cta": "Quero conhecer a mentoria"
+      },
+      {
+        "section": "garantia",
+        "copy": "Garantia de 7 dias conforme os termos da oferta vigentes (exemplo ilustrativo).",
+        "claims": [
+          "guarantee"
+        ]
+      }
+    ],
+    "claims_pending": [
+      "Garantia de 7 dias (exemplo ilustrativo, aguardando confirmação do dono da oferta)",
+      "Prazo de 8 semanas do programa (exemplo ilustrativo, aguardando confirmação do dono da oferta)"
+    ],
+    "draft_id": "cvc-lp-mentoria-v2"
+  },
+  "payload_sha256": "ee95da7e29203a1fbb8c1702f9f613e7d019448d1e886adddcb00cd655d52610",
+  "risk_level": "high",
+  "policy_applied": "risk-policy: landing page com claim de garantia escalona para risco alto; exige compliance-checker, G3 e G4",
+  "reviews": {
+    "edit_report_id": "edt-lp-mentoria-v2",
+    "brand_review_id": "bvr-lp-mentoria-v2",
+    "compliance_review_id": "cpl-lp-mentoria-v2"
+  },
+  "requested_by": "copy-publisher",
+  "approver_role": "approval-owner",
+  "expires_at": "2026-11-13T14:30:00-03:00",
+  "idempotency_key": "camp-fluxo-caixa-lancamento:cvc-lp-mentoria:g4:r1:ee95da7e2920",
+  "audit_trail": [
+    {
+      "at": "2026-11-10T14:00:00-03:00",
+      "actor": "compliance-checker",
+      "action": "compliance-review concluída com garantia pendente de confirmação"
+    },
+    {
+      "at": "2026-11-10T14:30:00-03:00",
+      "actor": "copy-publisher",
+      "action": "pacote de aprovação montado e payload_sha256 calculado"
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "aud-fluxo-caixa-001",
+    "artifact_type": "audience-voc",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "pme-financas-exemplo",
+    "produced_by": "audience-voc",
+    "produced_at": "2026-11-10T14:00:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.65,
+    "risk_level": "medium",
+    "assumptions": [
+      "Dados deste exemplo são ilustrativos e não representam resultados reais."
+    ],
+    "sources": [
+      {
+        "title": "Entrevista interna de descoberta (exemplo ilustrativo)",
+        "locator": ".data/copy-squad/pme-financas-exemplo/_library/entrevista-exemplo.md",
+        "type": "internal",
+        "accessed_at": "2026-11-09",
+        "summary": "Resumo ilustrativo de uma conversa com o time comercial."
+      }
+    ]
+  },
+  "segment": "Donos de pequenas empresas de serviços",
+  "icp": "Empresa com 2 a 15 pessoas, sem financeiro dedicado (exemplo ilustrativo)",
+  "jobs_to_be_done": [
+    "Saber se pode contratar mais uma pessoa",
+    "Pagar fornecedores sem aperto"
+  ],
+  "pain_points": [
+    {
+      "pain": "Falta de visão do caixa dos próximos 30 dias",
+      "intensity": 5,
+      "evidence": [
+        "Relato ilustrativo na entrevista interna"
+      ]
+    },
+    {
+      "pain": "Contas pessoais misturadas com as da empresa",
+      "intensity": 4,
+      "evidence": []
+    }
+  ],
+  "desires": [
+    "Tranquilidade no fim do mês",
+    "Rotina simples de acompanhamento"
+  ],
+  "objections": [
+    {
+      "objection": "Não tenho tempo para mais uma rotina",
+      "category": "time",
+      "frequency": "high",
+      "evidence": [
+        "Exemplo ilustrativo"
+      ]
+    },
+    {
+      "objection": "Já paguei por curso e não apliquei",
+      "category": "trust",
+      "frequency": "medium",
+      "evidence": []
+    }
+  ],
+  "beliefs": [
+    "Planilha resolve se eu tiver disciplina"
+  ],
+  "customer_phrases": [
+    {
+      "phrase": "Eu nunca sei se o dinheiro vai dar até o dia 30",
+      "source": "Frase ilustrativa para o exemplo",
+      "context": "Descrição da dor",
+      "anonymized": true,
+      "reuse": "adapt_only"
+    }
+  ],
+  "awareness_stage": "problem_aware",
+  "sources_analyzed": [
+    "Entrevista interna de descoberta (exemplo ilustrativo)"
+  ],
+  "gaps": [
+    "Faltam comentários reais de clientes",
+    "Sem dados de busca"
+  ],
+  "usage_basis": "internal_data"
+}

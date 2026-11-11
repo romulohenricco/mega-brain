@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:email-journey:v1",
+  "title": "Email Journey",
+  "description": "Contrato de saída do email-crm-copywriter: jornada de e-mails ou mensagens de CRM com gatilhos, atrasos, métricas de sucesso e base de consentimento. Todo e-mail exige aprovação humana antes do envio.",
+  "type": "object",
+  "required": [
+    "meta",
+    "objective",
+    "audience_segment",
+    "consent_basis",
+    "emails"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "audience_segment": {
+      "type": "string"
+    },
+    "consent_basis": {
+      "type": "string"
+    },
+    "emails": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "email_id",
+          "trigger",
+          "delay",
+          "subject",
+          "body",
+          "cta",
+          "success_metric",
+          "requires_approval"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "email_id": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "delay": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "preview_text": {
+            "type": "string",
+            "maxLength": 140
+          },
+          "body": {
+            "type": "string"
+          },
+          "cta": {
+            "type": "string"
+          },
+          "success_metric": {
+            "type": "string"
+          },
+          "segment_variations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requires_approval": {
+            "const": true
+          }
+        }
+      }
+    },
+    "exit_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fallback_for_non_openers": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "uxc-exemplo-v1",
+    "artifact_type": "ux-copy",
+    "campaign_id": "camp-mentoria-fluxo-caixa-q1",
+    "business": "exemplo-negocio",
+    "produced_by": "ux-writer",
+    "produced_at": "2026-11-10T14:30:00Z",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "draft",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Esqueleto de exemplo; substituir pelos valores reais."
+    ]
+  },
+  "surface": "form",
+  "context": "Contexto de exemplo",
+  "copy": [
+    {
+      "element": "botao",
+      "text": "Enviar",
+      "character_limit": 16,
+      "accessibility_note": "Nota de exemplo"
+    }
+  ],
+  "glossary_terms_used": [
+    "termo"
+  ]
+}

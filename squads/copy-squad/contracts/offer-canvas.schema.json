@@ -1,0 +1,439 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:megabrain:copy-squad:contract:offer-canvas:v1",
+  "title": "Canvas da Oferta",
+  "description": "Canvas de oferta e posicionamento: promessa, mecanismo, pilha de provas com status de verificação, preço, garantia, urgência legítima, posicionamento e respostas a objeções.",
+  "type": "object",
+  "required": [
+    "meta",
+    "promise",
+    "mechanism",
+    "proof_stack",
+    "legitimate_urgency",
+    "positioning"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "promise": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mechanism": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proof_stack": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "proof_id": {
+            "type": "string",
+            "pattern": "^prv-[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Identificador de prova, prefixo prv- (o prefixo prf- é de performance-analysis)."
+          },
+          "type": {
+            "enum": [
+              "testimonial",
+              "case",
+              "data",
+              "demo",
+              "guarantee",
+              "certification",
+              "media"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "usage_rights": {
+            "enum": [
+              "granted",
+              "pending",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "proof_id",
+          "type",
+          "summary",
+          "source",
+          "verified"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "testimonial",
+                    "case"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "required": [
+                "usage_rights"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "testimonial",
+                    "case"
+                  ]
+                },
+                "verified": {
+                  "const": true
+                }
+              },
+              "required": [
+                "type",
+                "verified"
+              ]
+            },
+            "then": {
+              "properties": {
+                "usage_rights": {
+                  "const": "granted"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "price": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "payment_terms": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "guarantee": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "terms": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "bonuses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_reversal": {
+      "type": "string"
+    },
+    "legitimate_urgency": {
+      "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "exists"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "exists": {
+                "const": true
+              }
+            },
+            "required": [
+              "exists"
+            ]
+          },
+          "then": {
+            "required": [
+              "reason",
+              "deadline"
+            ],
+            "properties": {
+              "reason": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "positioning": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "differentiators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "competitors_reference": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "messaging_house": {
+          "type": "object",
+          "description": "Messaging house: mensagem central e até 3 pilares, cada um com as provas que o sustentam.",
+          "properties": {
+            "central_message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pillars": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pillar": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "proof_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^prv-[a-z0-9]+(-[a-z0-9]+)*$"
+                    }
+                  }
+                },
+                "required": [
+                  "pillar"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "central_message"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "category",
+        "differentiators"
+      ],
+      "additionalProperties": false
+    },
+    "sale_angles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "objection_responses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objection": {
+            "type": "string",
+            "minLength": 1
+          },
+          "response": {
+            "type": "string",
+            "minLength": 1
+          },
+          "proof_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^prv-[a-z0-9]+(-[a-z0-9]+)*$"
+            }
+          },
+          "mechanism": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "objection",
+          "response"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "needs_approval": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "artifact_id",
+        "artifact_type",
+        "business",
+        "produced_by",
+        "produced_at",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z]{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "campaign_id": {
+          "type": "string",
+          "pattern": "^camp-[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "business": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "produced_by": {
+          "type": "string",
+          "pattern": "^[a-z]+(-[a-z]+)*$"
+        },
+        "produced_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "ready",
+            "needs_input",
+            "needs_approval",
+            "approved",
+            "rejected",
+            "blocked",
+            "published",
+            "archived"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "title",
+        "locator",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string",
+          "description": "URL pública ou caminho repo-relativo/.data"
+        },
+        "type": {
+          "enum": [
+            "primary",
+            "official",
+            "customer",
+            "internal",
+            "secondary"
+          ]
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

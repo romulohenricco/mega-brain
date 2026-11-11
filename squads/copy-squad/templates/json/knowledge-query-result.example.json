@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "artifact_id": "kqr-exemplo",
+    "artifact_type": "knowledge-query-result",
+    "campaign_id": "camp-fluxo-caixa-lancamento",
+    "business": "exemplo-negocio",
+    "produced_by": "knowledge-curator",
+    "produced_at": "2026-11-10T14:30:00-03:00",
+    "version": 1,
+    "prompt_version": "1.0.0",
+    "model": "sonnet",
+    "status": "ready",
+    "confidence": 0.5,
+    "risk_level": "low",
+    "assumptions": [
+      "Dados ilustrativos para fixture; não representam resultados reais."
+    ]
+  },
+  "query": "exemplo de consulta",
+  "results": [
+    {
+      "asset_id": "ang-exemplo",
+      "title": "Exemplo",
+      "type": "angle",
+      "asset_status": "draft",
+      "summary": "Resumo curto",
+      "source_path": ".data/copy-squad/exemplo-negocio/_library/index.jsonl",
+      "relevance": 0.5
+    }
+  ],
+  "missing_knowledge": []
+}

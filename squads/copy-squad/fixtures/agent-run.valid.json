@@ -1,0 +1,18 @@
+{
+  "run_id": "run-20261110-143000-brief-01",
+  "campaign_id": "camp-fluxo-caixa-lancamento",
+  "business": "exemplo-negocio",
+  "agent_name": "copy-publisher",
+  "task": "prepare-approval-package",
+  "model": "haiku",
+  "prompt_version": "1.0.0",
+  "input_ref": ".data/copy-squad/exemplo-negocio/camp-fluxo-caixa-lancamento/05-review/cvc-lp-mentoria/compliance-review-v2.json",
+  "output_ref": ".data/copy-squad/exemplo-negocio/camp-fluxo-caixa-lancamento/06-approval/cvc-lp-mentoria/g4-r1/approval-request.json",
+  "tokens_in": 4200,
+  "tokens_out": 900,
+  "cost_usd": 0.004,
+  "latency_ms": 6100,
+  "status": "success",
+  "started_at": "2026-11-10T14:29:50-03:00",
+  "finished_at": "2026-11-10T14:29:56-03:00"
+}
